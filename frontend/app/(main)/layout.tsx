@@ -44,7 +44,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                             loading="eager"
                         />
                         <Group>
-                            <Group ml="xl" gap={0} visibleFrom="sm">
+                            <Group ml="xl" gap="xs" visibleFrom="sm">
                                 <UnstyledButton
                                     component={Link}
                                     href="/"

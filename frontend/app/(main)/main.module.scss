@@ -2,7 +2,7 @@
 .footerLink {
     display: inline-flex;
     align-items: center;
-    padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
+    padding: 4px 10px;
     border-radius: var(--mantine-radius-sm);
     color: var(--mantine-color-pink-6);
     font-size: var(--mantine-font-size-md);
@@ -17,9 +17,10 @@
 }
 
 .link {
-    color: var(--mantine-color-pink-6);
+    color: var(--mantine-color-pink-filled);
     &:hover {
-        color: var(--mantine-color-pink-filled);
+        color: white;
+        background-color: var(--mantine-color-pink-filled);
     }
 }
 
