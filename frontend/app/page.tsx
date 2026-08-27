@@ -1,10 +1,15 @@
+import { Catalog } from "@/components/Catalog";
 import Layout from "./(main)/layout";
-import { Title } from "@mantine/core";
+import { Center, Stack } from "@mantine/core";
 
 export default function MainPage() {
     return (
         <Layout>
-            <Title>Main</Title>
+            <Stack>
+                <Center>
+                    <Catalog />
+                </Center>
+            </Stack>
         </Layout>
     );
 }

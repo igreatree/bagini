@@ -1,0 +1,13 @@
+.catalog {
+    .image {
+        transition: scale 0.3s ease;
+    }
+    .item {
+        &:hover {
+            color: var(--mantine-color-pink-filled);
+            .image {
+                scale: 1.1;
+            }
+        }
+    }
+}

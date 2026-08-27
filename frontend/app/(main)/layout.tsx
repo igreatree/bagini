@@ -5,6 +5,7 @@ import {
     AppShell,
     Burger,
     Group,
+    Text,
     UnstyledButton,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
@@ -26,7 +27,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             }}
             padding="md"
         >
-            <AppShell.Header>
+            <AppShell.Header bg="#ffffff9c" style={{ border: "none" }}>
                 <Group h="100%" px="md">
                     <Burger
                         opened={opened}
@@ -95,6 +96,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </AppShell.Navbar>
 
             <AppShell.Main>{children}</AppShell.Main>
+            <AppShell.Footer bg="#ffffff9c" style={{ border: "none" }}>
+                <Group justify="space-between" px="md" py="sm">
+                    <Text>© 2026 Bagini</Text>
+                    <Group gap="xs">
+                        <UnstyledButton className={styles.footerLink}>
+                            Политика конфиденциальности
+                        </UnstyledButton>
+                        <UnstyledButton className={styles.footerLink}>
+                            Условия использования
+                        </UnstyledButton>
+                    </Group>
+                </Group>
+            </AppShell.Footer>
         </AppShell>
     );
 }
