@@ -4,6 +4,7 @@ import { AppShell, Burger, Group, UnstyledButton } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import Image from "next/image";
 import Link from "next/link";
+import styles from "./main.module.scss";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
     const [opened, { toggle }] = useDisclosure();
@@ -35,22 +36,36 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                             loading="eager"
                         />
                         <Group ml="xl" gap={0} visibleFrom="sm">
-                            <UnstyledButton component={Link} href="/">
-                                Главная
+                            <UnstyledButton
+                                component={Link}
+                                href="/"
+                                className={styles.link}
+                            >
+                                Продукты
                             </UnstyledButton>
-                            <UnstyledButton component={Link} href="about">
+                            <UnstyledButton
+                                component={Link}
+                                href="about"
+                                className={styles.link}
+                            >
                                 О нас
                             </UnstyledButton>
-                            <UnstyledButton>Контакты</UnstyledButton>
+                            <UnstyledButton className={styles.link}>
+                                Контакты
+                            </UnstyledButton>
                         </Group>
                     </Group>
                 </Group>
             </AppShell.Header>
 
             <AppShell.Navbar py="md" px={4}>
-                <UnstyledButton>Главная</UnstyledButton>
-                <UnstyledButton>О нас</UnstyledButton>
-                <UnstyledButton>Контакты</UnstyledButton>
+                <UnstyledButton className={styles.link}>
+                    Продукты
+                </UnstyledButton>
+                <UnstyledButton className={styles.link}>О нас</UnstyledButton>
+                <UnstyledButton className={styles.link}>
+                    Контакты
+                </UnstyledButton>
             </AppShell.Navbar>
 
             <AppShell.Main>{children}</AppShell.Main>

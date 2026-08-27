@@ -1,0 +1,17 @@
+.link {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
+    border-radius: var(--mantine-radius-sm);
+    color: var(--mantine-color-text);
+    font-size: var(--mantine-font-size-md);
+    text-decoration: none;
+    transition:
+        background-color 150ms ease,
+        color 150ms ease;
+
+    &:hover {
+        background-color: var(--mantine-color-gray-0);
+        color: var(--mantine-color-pink-filled);
+    }
+}
