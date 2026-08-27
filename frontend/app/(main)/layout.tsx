@@ -1,10 +1,17 @@
 "use client";
 
-import { AppShell, Burger, Group, UnstyledButton } from "@mantine/core";
+import {
+    ActionIcon,
+    AppShell,
+    Burger,
+    Group,
+    UnstyledButton,
+} from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./main.module.scss";
+import { IconBasket, IconUser } from "@tabler/icons-react";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
     const [opened, { toggle }] = useDisclosure();
@@ -35,24 +42,43 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                             height={37}
                             loading="eager"
                         />
-                        <Group ml="xl" gap={0} visibleFrom="sm">
-                            <UnstyledButton
-                                component={Link}
-                                href="/"
-                                className={styles.link}
+                        <Group>
+                            <Group ml="xl" gap={0} visibleFrom="sm">
+                                <UnstyledButton
+                                    component={Link}
+                                    href="/"
+                                    className={styles.link}
+                                >
+                                    Продукты
+                                </UnstyledButton>
+                                <UnstyledButton
+                                    component={Link}
+                                    href="about"
+                                    className={styles.link}
+                                >
+                                    О нас
+                                </UnstyledButton>
+                                <UnstyledButton className={styles.link}>
+                                    Контакты
+                                </UnstyledButton>
+                            </Group>
+
+                            <ActionIcon
+                                variant="outline"
+                                radius="50%"
+                                color="pink"
+                                size="lg"
                             >
-                                Продукты
-                            </UnstyledButton>
-                            <UnstyledButton
-                                component={Link}
-                                href="about"
-                                className={styles.link}
+                                <IconBasket />
+                            </ActionIcon>
+                            <ActionIcon
+                                variant="outline"
+                                radius="50%"
+                                color="pink"
+                                size="lg"
                             >
-                                О нас
-                            </UnstyledButton>
-                            <UnstyledButton className={styles.link}>
-                                Контакты
-                            </UnstyledButton>
+                                <IconUser />
+                            </ActionIcon>
                         </Group>
                     </Group>
                 </Group>
