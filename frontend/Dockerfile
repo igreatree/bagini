@@ -22,4 +22,4 @@ COPY --from=builder /app/.next/static ./.next/static
 
 EXPOSE 80
 
-CMD ["node", "server.js", "--port", "80"]
+CMD ["node", "server.js"]
