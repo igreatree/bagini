@@ -5,6 +5,7 @@ import {
     AppShell,
     Burger,
     Group,
+    ScrollArea,
     Text,
     UnstyledButton,
 } from "@mantine/core";
@@ -25,7 +26,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 breakpoint: "sm",
                 collapsed: { desktop: true, mobile: !opened },
             }}
-            padding="md"
+            footer={{ height: 60 }}
+            padding="sm"
         >
             <AppShell.Header bg="#ffffff9c" style={{ border: "none" }}>
                 <Group h="100%" px="md">
@@ -54,12 +56,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                                 </UnstyledButton>
                                 <UnstyledButton
                                     component={Link}
-                                    href="about"
+                                    href="contacts"
                                     className={styles.link}
                                 >
-                                    О нас
-                                </UnstyledButton>
-                                <UnstyledButton className={styles.link}>
                                     Контакты
                                 </UnstyledButton>
                             </Group>
@@ -89,13 +88,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <UnstyledButton className={styles.link}>
                     Продукты
                 </UnstyledButton>
-                <UnstyledButton className={styles.link}>О нас</UnstyledButton>
                 <UnstyledButton className={styles.link}>
                     Контакты
                 </UnstyledButton>
             </AppShell.Navbar>
 
-            <AppShell.Main>{children}</AppShell.Main>
+            <AppShell.Main style={{ height: "100vh", overflow: "hidden" }}>
+                <ScrollArea h="100%">{children}</ScrollArea>
+            </AppShell.Main>
             <AppShell.Footer bg="#ffffff9c" style={{ border: "none" }}>
                 <Group justify="space-between" px="md" py="sm">
                     <Text>© 2026 Bagini</Text>

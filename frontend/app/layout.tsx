@@ -27,7 +27,7 @@ export default function RootLayout({
                     color1="#FF9FFC"
                     color2="#ffffff"
                     color3="#cf97c9"
-                    timeSpeed={0.25}
+                    timeSpeed={1.25}
                     colorBalance={0}
                     warpStrength={1}
                     warpFrequency={5}
