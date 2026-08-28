@@ -44,12 +44,9 @@ export class AuthService {
             type: "flash",
             code: code,
             phone: phone,
-            sms_originator: "RUSInfo",
             sms_text: `Ваш код подтверждения ${code}`,
             callback_url: "https://bagini.shop/",
         };
-
-        console.log({ payload: payload.toString() });
 
         const headers = {
             "Content-Type": "application/x-www-form-urlencoded",
