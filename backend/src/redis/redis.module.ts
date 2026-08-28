@@ -17,6 +17,6 @@ const redisProvider: Provider = {
 @Global()
 @Module({
     providers: [redisProvider, RedisService],
-    exports: [RedisService],
+    exports: [REDIS_CLIENT, RedisService],
 })
 export class RedisModule {}
