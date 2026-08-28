@@ -38,7 +38,7 @@ export class AuthService {
 
         await this.redisService.setWithExpiry(redisKey, code, 300);
 
-        const payload = {
+        const payload = new URLSearchParams({
             login: process.env.SMS_SERVICE_LOGIN || "",
             pass: process.env.SMS_SERVICE_PASSWORD || "",
             type: "flash",
@@ -46,7 +46,7 @@ export class AuthService {
             phone: phone,
             sms_text: `Ваш код подтверждения ${code}`,
             callback_url: "https://bagini.shop/",
-        };
+        });
 
         const headers = {
             "Content-Type": "application/x-www-form-urlencoded",
@@ -55,7 +55,7 @@ export class AuthService {
         try {
             await this.httpService.post(
                 "https://gateway.api.sc/flash/",
-                JSON.stringify(payload),
+                payload.toString(),
                 { headers },
             );
         } catch (error) {
