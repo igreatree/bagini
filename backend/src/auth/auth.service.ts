@@ -53,11 +53,12 @@ export class AuthService {
         };
 
         try {
-            await this.httpService.post(
+            const response = await this.httpService.post(
                 "https://gateway.api.sc/flash/",
                 payload.toString(),
                 { headers },
             );
+            console.log({ response: JSON.stringify(response) });
         } catch (error) {
             throw new Error(
                 `Ошибка при отправке запроса: ${JSON.stringify(error)}`,
