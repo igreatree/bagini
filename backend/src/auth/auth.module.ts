@@ -5,6 +5,7 @@ import { PassportModule } from "@nestjs/passport";
 import { AuthService } from "./auth.service";
 import { JwtCookieStrategy } from "./jwtCookie.stategy";
 import { AuthController } from "./auth.controller";
+import { HttpModule } from "@nestjs/axios";
 
 @Module({
     imports: [
@@ -15,6 +16,7 @@ import { AuthController } from "./auth.controller";
             secret: process.env.JWT_SECRET,
             signOptions: { expiresIn: "7d" },
         }),
+        HttpModule,
     ],
     providers: [AuthService, JwtCookieStrategy],
     exports: [AuthService],
