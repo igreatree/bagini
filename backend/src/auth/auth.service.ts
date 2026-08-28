@@ -1,16 +1,11 @@
-import {
-    BadRequestException,
-    ConflictException,
-    Injectable,
-} from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { UserService } from "../user/user.service";
 import * as crypto from "crypto";
-import * as bcrypt from "bcryptjs";
 import * as express from "express";
-import { User } from "../../generated/prisma/client";
 import { RedisService } from "../redis/redis.service";
 import { HttpService } from "@nestjs/axios";
+import { firstValueFrom } from "rxjs";
 
 @Injectable()
 export class AuthService {
@@ -53,12 +48,13 @@ export class AuthService {
         };
 
         try {
-            const response = await this.httpService.post(
-                "https://gateway.api.sc/flash/",
-                payload.toString(),
-                { headers },
+            await firstValueFrom(
+                this.httpService.post(
+                    "https://gateway.api.sc/flash/",
+                    payload.toString(),
+                    { headers },
+                ),
             );
-            console.log({ response: JSON.stringify(response) });
         } catch (error) {
             throw new Error(
                 `Ошибка при отправке запроса: ${JSON.stringify(error)}`,
