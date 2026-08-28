@@ -49,6 +49,8 @@ export class AuthService {
             callback_url: "https://bagini.shop/",
         });
 
+        console.log({ payload: payload.toString() });
+
         const headers = {
             "Content-Type": "application/x-www-form-urlencoded",
         };
