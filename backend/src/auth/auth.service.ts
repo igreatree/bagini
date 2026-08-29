@@ -25,7 +25,7 @@ export class AuthService {
         }
 
         const code = crypto.randomInt(1000, 9999).toString();
-        await this.redisService.setWithExpiry(redisKey, code, 300);
+        await this.redisService.setWithExpiry(redisKey, code, 60);
 
         const payload = new URLSearchParams({
             login: process.env.SMS_SERVICE_LOGIN || "",
