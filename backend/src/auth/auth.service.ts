@@ -16,21 +16,15 @@ export class AuthService {
         private httpService: HttpService,
     ) {}
 
-    // async validateUser(phone: string): Promise<Omit<User, "password"> | null> {
-    //     const user = await this.userService.findOne({ phone });
-    //     if (user) {
-    //         const valid = await bcrypt.compare(pass, user.password);
-    //         if (valid) {
-    //             return user;
-    //         }
-    //     }
-    //     return null;
-    // }
-
     async sendSmsCode(phone: string) {
-        const code = crypto.randomInt(1000, 9999).toString();
         const redisKey = `phone_code:${phone}`;
 
+        const existCode = await this.redisService.get(redisKey);
+        if (existCode) {
+            throw new BadRequestException("Пока нельзя запросить код");
+        }
+
+        const code = crypto.randomInt(1000, 9999).toString();
         await this.redisService.setWithExpiry(redisKey, code, 300);
 
         const payload = new URLSearchParams({
@@ -61,7 +55,7 @@ export class AuthService {
             );
         }
 
-        return { message: "Код успешно отправлен" };
+        return { success: true };
     }
 
     async verifySmsCode(

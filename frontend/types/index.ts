@@ -1,3 +1,29 @@
+import { AxiosError } from "axios";
+
+export type UserRoleType = "admin" | "moderator" | "user";
+
+export type ErrorResponseType = AxiosError<{
+    message: string;
+    status: number;
+}>;
+
+export type QuerySearchType = {
+    skip?: number;
+    take?: number;
+    search?: string;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+};
+
+export type UserType = {
+    id: number;
+    phone: string;
+    role: UserRoleType;
+    email?: string;
+    name?: string;
+    lastName?: string;
+};
+
 export interface IProduct {
     id: string;
     productName: string;
