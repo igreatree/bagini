@@ -78,11 +78,12 @@ export class UserService {
         });
     }
 
-    update(params: {
+    async update(params: {
         where: Prisma.UserWhereUniqueInput;
         data: Prisma.UserUpdateInput;
     }) {
-        return this.prisma.user.update(params);
+        const user = await this.prisma.user.update(params);
+        return { user };
     }
 
     delete(where: Prisma.UserWhereUniqueInput) {
