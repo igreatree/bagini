@@ -8,6 +8,7 @@ type UserStoreType = {
     user: UserType | null;
     phone: string | null;
     isLoaded: boolean;
+    basket: string[];
     sendSmsCode: (phone: string) => Promise<boolean>;
     verifySmsCode: (code: string) => Promise<UserType | null>;
     updateUser: (
@@ -16,6 +17,7 @@ type UserStoreType = {
     getUser: () => Promise<void>;
     logout: () => Promise<void>;
     check: () => Promise<boolean>;
+    updateBasket: (id: string) => void;
 };
 
 export const useUserStore = create<UserStoreType>()(
@@ -24,6 +26,7 @@ export const useUserStore = create<UserStoreType>()(
             user: null,
             phone: null,
             isLoaded: false,
+            basket: [],
             sendSmsCode: async (phone) => {
                 const res = await sendSmsCode(phone);
                 if ("success" in res) {
@@ -74,6 +77,13 @@ export const useUserStore = create<UserStoreType>()(
                 }
 
                 return authorized;
+            },
+            updateBasket: (id) => {
+                set((state) => ({
+                    basket: state.basket.includes(id)
+                        ? state.basket.filter((c) => c !== id)
+                        : [...state.basket, id],
+                }));
             },
         }),
         {

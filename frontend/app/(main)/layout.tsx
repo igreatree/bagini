@@ -3,9 +3,11 @@
 import {
     ActionIcon,
     AppShell,
+    Avatar,
     Burger,
     Button,
     Group,
+    Indicator,
     ScrollArea,
     Stack,
     Text,
@@ -18,10 +20,11 @@ import styles from "./main.module.scss";
 import { IconBasket, IconUser } from "@tabler/icons-react";
 import { useUserStore } from "@/store/user";
 import { redirect } from "next/navigation";
+import { getInitials } from "@/helpers";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
     const [opened, { toggle }] = useDisclosure();
-    const { user } = useUserStore();
+    const { user, basket } = useUserStore();
 
     return (
         <AppShell
@@ -74,22 +77,44 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                             </Group>
                             {user ? (
                                 <>
-                                    <ActionIcon
-                                        variant="outline"
-                                        radius="50%"
+                                    <Indicator
+                                        inline
+                                        label={basket.length}
                                         color="pink"
-                                        size="lg"
+                                        size={16}
+                                        offset={2}
+                                        disabled={!basket.length}
                                     >
-                                        <IconBasket />
-                                    </ActionIcon>
-                                    <ActionIcon
-                                        variant="outline"
-                                        radius="50%"
-                                        color="pink"
-                                        size="lg"
-                                    >
-                                        <IconUser />
-                                    </ActionIcon>
+                                        <ActionIcon
+                                            variant="outline"
+                                            radius="50%"
+                                            color="pink"
+                                            size="lg"
+                                        >
+                                            <IconBasket />
+                                        </ActionIcon>
+                                    </Indicator>
+                                    {user.name ? (
+                                        <Avatar
+                                            size={34}
+                                            radius="50%"
+                                            color="pink"
+                                            component={Link}
+                                            href="/profile"
+                                        >
+                                            {getInitials(user)}
+                                        </Avatar>
+                                    ) : (
+                                        <ActionIcon
+                                            variant="outline"
+                                            radius="50%"
+                                            color="pink"
+                                            size="lg"
+                                            onClick={() => redirect("/profile")}
+                                        >
+                                            <IconUser />
+                                        </ActionIcon>
+                                    )}
                                 </>
                             ) : (
                                 <Button

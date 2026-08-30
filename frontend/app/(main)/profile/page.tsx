@@ -91,16 +91,29 @@ export default function ProfilePage() {
         getUser();
     }, []);
 
+    useEffect(() => {
+        if (user) {
+            form.setValues({
+                name: user.name ?? "",
+                lastName: user.lastName ?? "",
+                email: user.email ?? "",
+                phone: user.phone,
+            });
+            form.resetDirty({
+                name: user.name ?? "",
+                lastName: user.lastName ?? "",
+                email: user.email ?? "",
+                phone: user.phone,
+            });
+        }
+    }, [user]);
+
     return (
         <Container size="sm" py="xl" px={0}>
             <Paper withBorder shadow="sm" radius="md" p="xl">
                 <Group justify="space-between" align="flex-start" mb="lg">
                     <Group>
-                        <Avatar
-                            size={80}
-                            radius="xl"
-                            color={roleColors[user?.role || "user"]}
-                        >
+                        <Avatar size={80} radius="xl" color="pink">
                             {getInitials(user)}
                         </Avatar>
                         <div>
@@ -118,19 +131,6 @@ export default function ProfilePage() {
                             </Badge>
                         </div>
                     </Group>
-
-                    {!isEditing && (
-                        <Tooltip label="Редактировать профиль">
-                            <ActionIcon
-                                variant="light"
-                                size="lg"
-                                onClick={() => setIsEditing(true)}
-                                color="pink"
-                            >
-                                <IconPencil size={18} />
-                            </ActionIcon>
-                        </Tooltip>
-                    )}
                 </Group>
 
                 <Divider mb="lg" />
@@ -165,6 +165,15 @@ export default function ProfilePage() {
                             </Text>
                             <Text size="sm">{user?.email || "—"}</Text>
                         </Group>
+                        <Button
+                            mt="md"
+                            leftSection={<IconPencil size={18} />}
+                            variant="light"
+                            color="pink"
+                            onClick={() => setIsEditing(true)}
+                        >
+                            Редактировать
+                        </Button>
                     </Stack>
                 ) : (
                     <form onSubmit={form.onSubmit(handleSubmit)}>
