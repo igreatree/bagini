@@ -24,7 +24,7 @@ export const ProductCard = ({
             <Card.Section style={{ display: "flex", justifyContent: "center" }}>
                 <Badge
                     style={{ position: "absolute", right: 10, top: 10 }}
-                    color="pink"
+                    color="red"
                 >
                     Новинка
                 </Badge>
@@ -42,14 +42,7 @@ export const ProductCard = ({
                 {productName}
             </Text>
 
-            <Button
-                color="pink"
-                variant="gradient"
-                gradient={{ from: "pink", to: "orange", deg: 90 }}
-                leftSection={<IconBasket />}
-                fullWidth
-                mt="md"
-            >
+            <Button color="pink" leftSection={<IconBasket />} fullWidth mt="md">
                 {formatPrice(price)}₽
             </Button>
         </Card>

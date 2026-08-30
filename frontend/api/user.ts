@@ -15,7 +15,7 @@ export const getUsers = async (
 };
 
 export const getCurrentUser = async (): Promise<
-    UserType | ErrorResponseType
+    { user: UserType } | ErrorResponseType
 > => {
     try {
         const response = await Api.get("/user");

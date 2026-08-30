@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { authCheck, sendSmsCode, verifySmsCode, logout } from "../api/auth";
 import type { UserType } from "../types";
-import { updateUser } from "@/api/user";
+import { getCurrentUser, updateUser } from "@/api/user";
 
 type UserStoreType = {
     user: UserType | null;
@@ -13,6 +13,7 @@ type UserStoreType = {
     updateUser: (
         user: Partial<Omit<UserType, "id" | "phone">>,
     ) => Promise<UserType | null>;
+    getUser: () => Promise<void>;
     logout: () => Promise<void>;
     check: () => Promise<boolean>;
 };
@@ -50,6 +51,10 @@ export const useUserStore = create<UserStoreType>()(
                     return res.user;
                 }
                 return null;
+            },
+            getUser: async () => {
+                const res = await getCurrentUser();
+                if ("user" in res) set({ user: res.user });
             },
             logout: async () => {
                 await logout();
