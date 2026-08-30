@@ -16,6 +16,7 @@ import {
 } from "@mantine/core";
 import { useMask } from "@mantine/hooks";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function AuthPage() {
@@ -100,10 +101,24 @@ export default function AuthPage() {
                         >
                             Получить код
                         </Button>
-                        <Text size="xs" c="dimmed" ta="center">
+                        <Text size="xs" c="dimmed" ta="center" w={320}>
                             Продолжая, вы соглашаетесь с{" "}
-                            <Anchor href="/terms" size="xs">
-                                условиями использования
+                            <Anchor
+                                component={Link}
+                                href="/terms/privacy-policy"
+                                c="pink"
+                                size="xs"
+                            >
+                                политикой конфиденциальности
+                            </Anchor>{" "}
+                            и{" "}
+                            <Anchor
+                                component={Link}
+                                href="/terms/public-offer"
+                                c="pink"
+                                size="xs"
+                            >
+                                публичной офертой
                             </Anchor>
                         </Text>
                     </Stack>
