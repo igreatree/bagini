@@ -2,13 +2,17 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { authCheck, sendSmsCode, verifySmsCode, logout } from "../api/auth";
 import type { UserType } from "../types";
+import { updateUser } from "@/api/user";
 
 type UserStoreType = {
     user: UserType | null;
     phone: string | null;
     isLoaded: boolean;
     sendSmsCode: (phone: string) => Promise<boolean>;
-    verifySmsCode: (code: string) => Promise<boolean>;
+    verifySmsCode: (code: string) => Promise<UserType | null>;
+    updateUser: (
+        user: Partial<Omit<UserType, "id" | "phone">>,
+    ) => Promise<UserType | null>;
     logout: () => Promise<void>;
     check: () => Promise<boolean>;
 };
@@ -33,11 +37,19 @@ export const useUserStore = create<UserStoreType>()(
                     const res = await verifySmsCode(phone, code);
                     if ("user" in res) {
                         set({ user: res.user });
-                        return true;
+                        return res.user;
                     }
-                    return false;
+                    return null;
                 }
-                return false;
+                return null;
+            },
+            updateUser: async (user) => {
+                const res = await updateUser(user);
+                if ("user" in res) {
+                    set({ user: res.user });
+                    return res.user;
+                }
+                return null;
             },
             logout: async () => {
                 await logout();

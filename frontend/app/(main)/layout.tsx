@@ -4,8 +4,10 @@ import {
     ActionIcon,
     AppShell,
     Burger,
+    Button,
     Group,
     ScrollArea,
+    Stack,
     Text,
     UnstyledButton,
 } from "@mantine/core";
@@ -14,9 +16,12 @@ import Image from "next/image";
 import Link from "next/link";
 import styles from "./main.module.scss";
 import { IconBasket, IconUser } from "@tabler/icons-react";
+import { useUserStore } from "@/store/user";
+import { redirect } from "next/navigation";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
     const [opened, { toggle }] = useDisclosure();
+    const { user } = useUserStore();
 
     return (
         <AppShell
@@ -56,56 +61,115 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                                 </UnstyledButton>
                                 <UnstyledButton
                                     component={Link}
-                                    href="contacts"
+                                    href="/contacts"
                                     className={styles.link}
                                 >
                                     Контакты
                                 </UnstyledButton>
                             </Group>
-
-                            <ActionIcon
-                                variant="outline"
-                                radius="50%"
-                                color="pink"
-                                size="lg"
-                            >
-                                <IconBasket />
-                            </ActionIcon>
-                            <ActionIcon
-                                variant="outline"
-                                radius="50%"
-                                color="pink"
-                                size="lg"
-                            >
-                                <IconUser />
-                            </ActionIcon>
+                            {user ? (
+                                <>
+                                    <ActionIcon
+                                        variant="outline"
+                                        radius="50%"
+                                        color="pink"
+                                        size="lg"
+                                    >
+                                        <IconBasket />
+                                    </ActionIcon>
+                                    <ActionIcon
+                                        variant="outline"
+                                        radius="50%"
+                                        color="pink"
+                                        size="lg"
+                                    >
+                                        <IconUser />
+                                    </ActionIcon>
+                                </>
+                            ) : (
+                                <Button
+                                    variant="outline"
+                                    color="pink"
+                                    onClick={() => redirect("/auth")}
+                                >
+                                    Войти
+                                </Button>
+                            )}
                         </Group>
                     </Group>
                 </Group>
             </AppShell.Header>
 
             <AppShell.Navbar py="md" px={4}>
-                <UnstyledButton className={styles.link}>
-                    Продукты
-                </UnstyledButton>
-                <UnstyledButton className={styles.link}>
-                    Контакты
-                </UnstyledButton>
+                <Stack justify="space-between" h="100%">
+                    <Stack gap={0}>
+                        <UnstyledButton
+                            component={Link}
+                            href="/"
+                            className={styles.link}
+                        >
+                            Продукты
+                        </UnstyledButton>
+                        <UnstyledButton
+                            component={Link}
+                            href="/contacts"
+                            className={styles.link}
+                        >
+                            Контакты
+                        </UnstyledButton>
+                    </Stack>
+                    <Stack gap={0}>
+                        <UnstyledButton
+                            component={Link}
+                            href="/terms/privacy-policy"
+                            className={styles.link}
+                        >
+                            Политика конфиденциальности
+                        </UnstyledButton>
+                        <UnstyledButton
+                            component={Link}
+                            href="/terms/public-offer"
+                            className={styles.link}
+                        >
+                            Публичная оферта
+                        </UnstyledButton>
+                    </Stack>
+                </Stack>
             </AppShell.Navbar>
 
             <AppShell.Main style={{ height: "100vh", overflow: "hidden" }}>
                 <ScrollArea h="100%">{children}</ScrollArea>
             </AppShell.Main>
-            <AppShell.Footer bg="#ffffff9c" style={{ border: "none" }}>
-                <Group justify="space-between" px="md" py="sm">
+            <AppShell.Footer
+                bg="#ffffff9c"
+                px="md"
+                style={{
+                    border: "none",
+                    display: "flex",
+                    alignItems: "center",
+                }}
+            >
+                <Group w="100%" justify="space-between">
                     <Text>© 2026 Bagini</Text>
-                    <Group gap="xs">
-                        <UnstyledButton className={styles.footerLink}>
+                    <Group gap="md" visibleFrom="xs">
+                        <Link
+                            href="/terms/privacy-policy"
+                            style={{
+                                textDecoration: "none",
+                                color: "var(--mantine-color-pink-filled)",
+                            }}
+                        >
                             Политика конфиденциальности
-                        </UnstyledButton>
-                        <UnstyledButton className={styles.footerLink}>
-                            Условия использования
-                        </UnstyledButton>
+                        </Link>
+                        <Link
+                            href="/terms/public-offer"
+                            style={{
+                                textDecoration: "none",
+                                color: "var(--mantine-color-pink-filled)",
+                            }}
+                        >
+                            Публичная оферта
+                        </Link>
                     </Group>
                 </Group>
             </AppShell.Footer>

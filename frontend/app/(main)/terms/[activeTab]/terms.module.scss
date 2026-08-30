@@ -1,0 +1,19 @@
+.tab {
+    position: relative;
+    border-radius: var(--mantine-radius-sm);
+    background-color: #e649802f;
+    margin-right: 8px;
+    margin-bottom: 8px;
+
+    @mixin hover {
+        background-color: light-dark(
+            var(--mantine-color-gray-0),
+            var(--mantine-color-dark-5)
+        );
+    }
+
+    &[data-active] {
+        background-color: var(--mantine-color-pink-filled);
+        color: var(--mantine-color-white);
+    }
+}

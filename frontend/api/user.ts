@@ -26,3 +26,16 @@ export const getCurrentUser = async (): Promise<
         return error as ErrorResponseType;
     }
 };
+
+export const updateUser = async (
+    user: Partial<Omit<UserType, "id" | "phone">>,
+): Promise<{ user: UserType } | ErrorResponseType> => {
+    try {
+        const response = await Api.put("/user", user);
+
+        return response.data;
+    } catch (error) {
+        console.error("updateUser error:", error);
+        return error as ErrorResponseType;
+    }
+};
