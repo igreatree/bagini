@@ -29,6 +29,7 @@ export class UserController {
         return this.userService.findAll(query);
     }
 
+    @UseGuards(JwtCookieAuthGuard)
     @Get()
     async getCurrentUser(@Request() req) {
         const user = await this.userService.findOne({ id: req.user.id });
