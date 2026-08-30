@@ -38,10 +38,9 @@ export default function AuthPage() {
 
     const verifyCodeHandler = async (completeCode: string) => {
         const user = await verifySmsCode(completeCode);
-        console.log({ user });
         if (user) {
-            if (user.name) redirect("/");
-            else setStep("fillProfile");
+            if (!user.name) setStep("fillProfile");
+            else redirect("/");
         }
     };
 
@@ -55,8 +54,8 @@ export default function AuthPage() {
     };
 
     useEffect(() => {
-        if (user) redirect("/");
-    }, [user]);
+        if (user && step === "sendCode") redirect("/");
+    }, [user, step]);
 
     useEffect(() => {
         let interval: NodeJS.Timeout;
@@ -205,6 +204,7 @@ export default function AuthPage() {
                             }}
                         />
                         <Button
+                            disabled={!name}
                             color="pink"
                             size="lg"
                             onClick={updateUserHandler}

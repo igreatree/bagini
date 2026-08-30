@@ -43,13 +43,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         size="sm"
                     />
                     <Group justify="space-between" style={{ flex: 1 }}>
-                        <Image
-                            src="/logo.svg"
-                            alt="Bagini logo"
-                            width={90}
-                            height={37}
-                            loading="eager"
-                        />
+                        <Link
+                            href="/"
+                            style={{ display: "flex", alignItems: "center" }}
+                        >
+                            <Image
+                                src="/logo.svg"
+                                alt="Bagini logo"
+                                width={90}
+                                height={37}
+                                loading="eager"
+                            />
+                        </Link>
                         <Group>
                             <Group ml="xl" gap="xs" visibleFrom="sm">
                                 <UnstyledButton
