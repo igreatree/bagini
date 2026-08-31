@@ -125,7 +125,7 @@ export default function AuthPage() {
                                     >
                                         обработкой cookie и метрическими данными
                                     </Anchor>
-                                    и{" "}
+                                    {" и "}
                                     <Anchor
                                         component={Link}
                                         href="/terms/public-offer"
