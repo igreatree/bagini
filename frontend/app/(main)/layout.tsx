@@ -16,15 +16,16 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import Image from "next/image";
 import Link from "next/link";
-import styles from "./main.module.scss";
 import { IconBasket, IconUser } from "@tabler/icons-react";
 import { useUserStore } from "@/store/user";
-import { redirect } from "next/navigation";
 import { getInitials } from "@/helpers";
+import { useRouter } from "next/navigation";
+import styles from "./main.module.scss";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
     const [opened, { toggle }] = useDisclosure();
     const { user, basket } = useUserStore();
+    const router = useRouter();
 
     return (
         <AppShell
@@ -90,6 +91,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                                             radius="50%"
                                             color="pink"
                                             size="lg"
+                                            onClick={() =>
+                                                router.push("/basket")
+                                            }
                                         >
                                             <IconBasket />
                                         </ActionIcon>
@@ -110,7 +114,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                                             radius="50%"
                                             color="pink"
                                             size="lg"
-                                            onClick={() => redirect("/profile")}
+                                            onClick={() =>
+                                                router.push("/profile")
+                                            }
                                         >
                                             <IconUser />
                                         </ActionIcon>
@@ -120,7 +126,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                                 <Button
                                     variant="outline"
                                     color="pink"
-                                    onClick={() => redirect("/auth")}
+                                    onClick={() => router.push("/auth")}
                                 >
                                     Войти
                                 </Button>

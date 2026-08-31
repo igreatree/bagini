@@ -5,6 +5,7 @@ import { useUserStore } from "@/store/user";
 import { IProductCard } from "@/types";
 import { Card, Badge, Button, Text } from "@mantine/core";
 import { IconBasket, IconCheck } from "@tabler/icons-react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 export const ProductCard = ({
@@ -15,9 +16,17 @@ export const ProductCard = ({
     type,
 }: IProductCard) => {
     const { basket, updateBasket } = useUserStore();
+    const inBasket = basket.find((item) => item.id === id);
+    const router = useRouter();
 
     return (
-        <Card miw={300} shadow="sm" padding="lg" bg="#ffffff9c">
+        <Card
+            miw={300}
+            shadow="sm"
+            padding="lg"
+            bg="#ffffff9c"
+            onClick={() => router.push(`/product/${id}`)}
+        >
             <Card.Section style={{ display: "flex", justifyContent: "center" }}>
                 <Badge
                     style={{ position: "absolute", right: 10, top: 10 }}
@@ -32,22 +41,23 @@ export const ProductCard = ({
                     alt="Norway"
                 />
             </Card.Section>
-            <Text lineClamp={1} fz="sm" c="dimmed" mb="sm" mt="sm" title={type}>
+            <Badge size="xs" variant="light" mb="sm" mt="md" color="pink">
                 {type}
-            </Text>
+            </Badge>
             <Text fw={500} lineClamp={2} title={productName}>
                 {productName}
             </Text>
 
             <Button
-                onClick={() => updateBasket(id)}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    updateBasket(id);
+                }}
                 color="pink"
-                leftSection={
-                    basket.includes(id) ? <IconCheck /> : <IconBasket />
-                }
+                leftSection={inBasket ? <IconCheck /> : <IconBasket />}
                 fullWidth
                 mt="md"
-                variant={basket.includes(id) ? "outline" : "filled"}
+                variant={inBasket ? "outline" : "filled"}
             >
                 {formatPrice(price)}₽
             </Button>

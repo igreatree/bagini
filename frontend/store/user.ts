@@ -8,7 +8,7 @@ type UserStoreType = {
     user: UserType | null;
     phone: string | null;
     isLoaded: boolean;
-    basket: string[];
+    basket: { id: string; count: number }[];
     sendSmsCode: (phone: string) => Promise<boolean>;
     verifySmsCode: (code: string) => Promise<UserType | null>;
     updateUser: (
@@ -18,6 +18,7 @@ type UserStoreType = {
     logout: () => Promise<void>;
     check: () => Promise<boolean>;
     updateBasket: (id: string) => void;
+    basketQuantityChange: (id: string, count: number) => void;
 };
 
 export const useUserStore = create<UserStoreType>()(
@@ -80,18 +81,25 @@ export const useUserStore = create<UserStoreType>()(
             },
             updateBasket: (id) => {
                 set((state) => ({
-                    basket: state.basket.includes(id)
-                        ? state.basket.filter((c) => c !== id)
-                        : [...state.basket, id],
+                    basket: state.basket.find((item) => item.id === id)
+                        ? state.basket.filter((item) => item.id !== id)
+                        : [...state.basket, { id, count: 1 }],
+                }));
+            },
+            basketQuantityChange: (id, count) => {
+                set((state) => ({
+                    basket: state.basket.map((item) =>
+                        item.id !== id ? item : { id, count },
+                    ),
                 }));
             },
         }),
         {
-            name: "User-store",
+            name: "user-store",
             version: 1,
-            partialize: ({ user, phone }) => ({
+            partialize: ({ user, basket }) => ({
                 user,
-                phone,
+                basket,
             }),
         },
     ),
