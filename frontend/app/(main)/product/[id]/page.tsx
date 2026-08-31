@@ -67,7 +67,7 @@ export default function ProductPage() {
 
     return (
         <Container size="lg" p={0}>
-            <Breadcrumbs mb="lg">
+            {/* <Breadcrumbs mb="lg">
                 <Anchor size="sm" onClick={() => router.push("/")} c="pink">
                     Главная
                 </Anchor>
@@ -81,18 +81,19 @@ export default function ProductPage() {
                 <Text size="sm" c="dimmed">
                     {product.productName}
                 </Text>
-            </Breadcrumbs>
-
-            <UnstyledButton
-                onClick={() => router.back()}
+            </Breadcrumbs> */}
+            <Button
                 mb="md"
-                style={{ display: "flex", alignItems: "center", gap: 4 }}
+                variant="transparent"
+                leftSection={<IconChevronLeft />}
+                color="pink"
+                onClick={() => router.back()}
+                size="lg"
             >
-                <IconChevronLeft size={16} />
-                <Text size="sm">Назад</Text>
-            </UnstyledButton>
+                Назад
+            </Button>
 
-            <Grid gap="xl">
+            <Grid gap="sm">
                 <Grid.Col span={{ base: 12, sm: 5 }}>
                     <Stack gap="sm">
                         <Paper
@@ -150,7 +151,12 @@ export default function ProductPage() {
                     </Stack>
                 </Grid.Col>
 
-                <Grid.Col span={{ base: 12, sm: 7 }}>
+                <Grid.Col
+                    span={{ base: 12, sm: 7 }}
+                    p="sm"
+                    bdrs="sm"
+                    bg="#ffffff9c"
+                >
                     <Stack gap="sm">
                         <Badge size="xs" variant="light" color="pink">
                             {product.type}
