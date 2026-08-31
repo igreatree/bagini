@@ -26,7 +26,7 @@ import Image from "next/image";
 
 export default function ContactsPage() {
     return (
-        <Container size="md" py={{ base: 30, sm: 60 }}>
+        <Container size="md" py={{ base: 30, sm: 60 }} px={0}>
             <Stack gap="xl">
                 {/* Header */}
                 <Stack align="center" gap="sm">
@@ -50,12 +50,7 @@ export default function ContactsPage() {
                 {/* Company */}
                 <Paper withBorder radius="lg" p={{ base: "md", sm: "xl" }}>
                     <Group align="flex-start" wrap="nowrap" gap="lg">
-                        <ThemeIcon
-                            size={60}
-                            radius="xl"
-                            variant="light"
-                            color="pink"
-                        >
+                        <ThemeIcon size={60} radius="xl" variant="light">
                             <IconBuildingStore size={28} />
                         </ThemeIcon>
 
@@ -152,12 +147,7 @@ export default function ContactsPage() {
                 <Paper withBorder radius="lg" p={{ base: "lg", sm: "xl" }}>
                     <Group justify="space-between" align="center">
                         <Group>
-                            <ThemeIcon
-                                size={50}
-                                radius="xl"
-                                variant="light"
-                                color="pink"
-                            >
+                            <ThemeIcon size={50} radius="xl" variant="light">
                                 <IconHeart size={24} />
                             </ThemeIcon>
 
@@ -193,7 +183,7 @@ function Info({
     return (
         <Stack gap={4}>
             <Group gap="xs">
-                <ThemeIcon size="sm" variant="light" color="pink">
+                <ThemeIcon size="sm" variant="light">
                     {icon}
                 </ThemeIcon>
 
@@ -221,7 +211,7 @@ function ContactCard({
     return (
         <Paper withBorder radius="lg" p="lg" h="100%">
             <Stack gap="md">
-                <ThemeIcon size={52} radius="xl" variant="light" color="pink">
+                <ThemeIcon size={52} radius="xl" variant="light">
                     {icon}
                 </ThemeIcon>
 

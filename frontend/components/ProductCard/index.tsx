@@ -41,7 +41,7 @@ export const ProductCard = ({
                     alt="Norway"
                 />
             </Card.Section>
-            <Badge size="xs" variant="light" mb="sm" mt="md" color="pink">
+            <Badge size="xs" variant="light" mb="sm" mt="md">
                 {type}
             </Badge>
             <Text fw={500} lineClamp={2} title={productName}>
@@ -54,7 +54,6 @@ export const ProductCard = ({
                     if (!user) router.push("/auth");
                     else updateBasket(id);
                 }}
-                color="pink"
                 leftSection={inBasket ? <IconCheck /> : <IconBasket />}
                 fullWidth
                 mt="md"

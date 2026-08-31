@@ -94,7 +94,6 @@ export default function AuthPage() {
                         />
                         <Button
                             disabled={rawValue.length !== 10}
-                            color="pink"
                             size="lg"
                             onClick={sendCodeHandler}
                         >
@@ -161,7 +160,6 @@ export default function AuthPage() {
                         )}
                         {counter < 0 && (
                             <Button
-                                color="pink"
                                 size="lg"
                                 onClick={async () => {
                                     await sendCodeHandler();
@@ -205,7 +203,6 @@ export default function AuthPage() {
                         />
                         <Button
                             disabled={!name}
-                            color="pink"
                             size="lg"
                             onClick={updateUserHandler}
                         >

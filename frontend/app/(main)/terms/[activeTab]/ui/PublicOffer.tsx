@@ -34,12 +34,7 @@ export const PublicOffer = () => {
                 <Stack gap="xl">
                     {/* Header */}
                     <Stack gap="sm" align="center">
-                        <ThemeIcon
-                            size={60}
-                            radius="xl"
-                            variant="light"
-                            color="pink"
-                        >
+                        <ThemeIcon size={60} radius="xl" variant="light">
                             <IconFileText size={30} />
                         </ThemeIcon>
 
@@ -56,12 +51,11 @@ export const PublicOffer = () => {
                                 variant="light"
                                 size="lg"
                                 leftSection={<IconCalendar size={14} />}
-                                color="pink"
                             >
                                 Опубликовано: 20 августа 2026
                             </Badge>
 
-                            <Badge color="pink" variant="outline" size="lg">
+                            <Badge variant="outline" size="lg">
                                 Действует с 20 августа 2026
                             </Badge>
                         </Group>
@@ -91,7 +85,6 @@ export const PublicOffer = () => {
                         icon={<IconAlertCircle size={20} />}
                         title="Важно"
                         variant="light"
-                        color="pink"
                     >
                         Регистрация на Сайте или оформление Заказа означает
                         полное и безоговорочное принятие условий настоящей
@@ -155,7 +148,6 @@ export const PublicOffer = () => {
                                 icon={<IconAlertCircle size={20} />}
                                 title="Момент заключения договора"
                                 variant="light"
-                                color="pink"
                             >
                                 Нажатие кнопки «Оплатить» или «Оформить заказ»
                                 не является моментом заключения договора
@@ -306,7 +298,7 @@ export const PublicOffer = () => {
                     {/* Seller */}
                     <Paper withBorder radius="md" p="lg">
                         <Group mb="md">
-                            <ThemeIcon variant="light" size="lg" color="pink">
+                            <ThemeIcon variant="light" size="lg">
                                 <IconMail size={20} />
                             </ThemeIcon>
 

@@ -43,12 +43,7 @@ export const PaymentAndDelivery = () => {
                 <Stack gap="xl">
                     {/* Header */}
                     <Stack gap="sm" align="center">
-                        <ThemeIcon
-                            size={60}
-                            radius="xl"
-                            variant="light"
-                            color="pink"
-                        >
+                        <ThemeIcon size={60} radius="xl" variant="light">
                             <IconTruck size={30} />
                         </ThemeIcon>
 
@@ -64,7 +59,6 @@ export const PaymentAndDelivery = () => {
                             variant="light"
                             size="lg"
                             leftSection={<IconPackage size={14} />}
-                            color="pink"
                         >
                             Доставка по всей России
                         </Badge>
@@ -111,7 +105,6 @@ export const PaymentAndDelivery = () => {
                             icon={<IconShieldCheck size={22} />}
                             title="Ваши платежные данные защищены"
                             variant="light"
-                            color="pink"
                         >
                             Оплата происходит через защищенный платежный шлюз
                             банка-эквайера с использованием современных
@@ -135,7 +128,6 @@ export const PaymentAndDelivery = () => {
                                     size="lg"
                                     radius="xl"
                                     variant="light"
-                                    color="pink"
                                 >
                                     <IconReceipt size={20} />
                                 </ThemeIcon>
@@ -169,7 +161,6 @@ export const PaymentAndDelivery = () => {
                             icon={<IconMapPin size={20} />}
                             title="Доставляем по всей России"
                             variant="light"
-                            color="pink"
                         >
                             Срок и стоимость доставки зависят от региона и
                             выбранного способа получения заказа.
@@ -198,7 +189,6 @@ export const PaymentAndDelivery = () => {
                                 icon={<IconCheck size={18} />}
                                 title="Бесплатная доставка"
                                 variant="light"
-                                color="pink"
                             >
                                 При заказе на сумму от <b>4 000 рублей</b>{" "}
                                 доставка до пункта выдачи осуществляется
@@ -254,7 +244,6 @@ export const PaymentAndDelivery = () => {
                                     size="xl"
                                     radius="xl"
                                     variant="light"
-                                    color="pink"
                                 >
                                     <IconPackage size={24} />
                                 </ThemeIcon>
@@ -284,7 +273,6 @@ export const PaymentAndDelivery = () => {
                         icon={<IconAlertCircle size={22} />}
                         title="Проверка заказа при получении"
                         variant="light"
-                        color="pink"
                     >
                         Пожалуйста, проверяйте целостность внешней упаковки и
                         соответствие товаров заказу непосредственно в момент
@@ -324,12 +312,7 @@ export const PaymentAndDelivery = () => {
                     <Divider />
 
                     <Group justify="center">
-                        <ThemeIcon
-                            size="lg"
-                            radius="xl"
-                            variant="light"
-                            color="pink"
-                        >
+                        <ThemeIcon size="lg" radius="xl" variant="light">
                             <IconBuildingBank size={18} />
                         </ThemeIcon>
 

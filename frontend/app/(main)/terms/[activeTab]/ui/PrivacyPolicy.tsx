@@ -36,12 +36,7 @@ export const PrivacyPolicy = () => {
                 <Stack gap="xl">
                     {/* Header */}
                     <Stack gap="sm" align="center">
-                        <ThemeIcon
-                            size={60}
-                            radius="xl"
-                            variant="light"
-                            color="pink"
-                        >
+                        <ThemeIcon size={60} radius="xl" variant="light">
                             <IconShieldCheck size={30} />
                         </ThemeIcon>
 
@@ -59,7 +54,6 @@ export const PrivacyPolicy = () => {
                             variant="light"
                             size="lg"
                             leftSection={<IconCalendar size={14} />}
-                            color="pink"
                         >
                             Актуальная редакция
                         </Badge>
@@ -300,7 +294,6 @@ export const PrivacyPolicy = () => {
                                 icon={<IconMail size={20} />}
                                 title="Отзыв согласия"
                                 variant="light"
-                                color="pink"
                             >
                                 Для отзыва согласия направьте электронное
                                 уведомление на{" "}
@@ -336,12 +329,7 @@ export const PrivacyPolicy = () => {
                     <Divider />
 
                     <Group justify="center">
-                        <ThemeIcon
-                            size="lg"
-                            radius="xl"
-                            variant="light"
-                            color="pink"
-                        >
+                        <ThemeIcon size="lg" radius="xl" variant="light">
                             <IconLock size={18} />
                         </ThemeIcon>
 

@@ -40,7 +40,7 @@ export const InfoCard = ({
     return (
         <Paper withBorder radius="md" p="lg">
             <Stack gap="sm">
-                <ThemeIcon size="lg" radius="xl" variant="light" color="pink">
+                <ThemeIcon size="lg" radius="xl" variant="light">
                     {icon}
                 </ThemeIcon>
 
@@ -71,20 +71,13 @@ export const DeliveryCard = ({
         <Paper withBorder radius="md" p={{ base: "md", sm: "lg" }}>
             <Stack gap="md">
                 <Group wrap="nowrap">
-                    <ThemeIcon
-                        size="xl"
-                        radius="xl"
-                        variant="light"
-                        color="pink"
-                    >
+                    <ThemeIcon size="xl" radius="xl" variant="light">
                         {icon}
                     </ThemeIcon>
 
                     <Box>
                         <Group gap="xs">
-                            <Badge variant="light" color="pink">
-                                {number}
-                            </Badge>
+                            <Badge variant="light">{number}</Badge>
 
                             <Text fw={600}>{title}</Text>
                         </Group>
@@ -164,7 +157,7 @@ export const DataBlock = ({
     return (
         <Paper withBorder radius="md" p="lg">
             <Group mb="md">
-                <ThemeIcon variant="light" radius="xl" color="pink">
+                <ThemeIcon variant="light" radius="xl">
                     {icon}
                 </ThemeIcon>
 

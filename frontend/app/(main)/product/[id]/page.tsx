@@ -84,7 +84,6 @@ export default function ProductPage() {
                 mb="md"
                 variant="transparent"
                 leftSection={<IconChevronLeft />}
-                color="pink"
                 onClick={() => router.back()}
                 size="lg"
             >
@@ -156,7 +155,7 @@ export default function ProductPage() {
                     bg="#ffffff9c"
                 >
                     <Stack gap="sm">
-                        <Badge size="xs" variant="light" color="pink">
+                        <Badge size="xs" variant="light">
                             {product.type}
                         </Badge>
 
@@ -205,7 +204,6 @@ export default function ProductPage() {
                                     if (!user) router.push("/auth");
                                     else updateBasket(product.id);
                                 }}
-                                color="pink"
                                 leftSection={
                                     inBasket ? <IconCheck /> : <IconBasket />
                                 }
@@ -400,7 +398,7 @@ export default function ProductPage() {
 //                 {/* Информация о товаре */}
 //                 <Grid.Col span={{ base: 12, sm: 7 }}>
 //                     <Stack gap="sm">
-//                         <Badge size="xs" variant="light" color="pink">
+//                         <Badge size="xs" variant="light">
 //                             {product.type}
 //                         </Badge>
 
@@ -417,7 +415,6 @@ export default function ProductPage() {
 
 //                             <Button
 //                                 onClick={() => updateBasket(product.id)}
-//                                 color="pink"
 //                                 leftSection={
 //                                     inBasket ? <IconCheck /> : <IconBasket />
 //                                 }

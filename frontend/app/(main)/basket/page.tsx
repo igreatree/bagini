@@ -149,12 +149,7 @@ export default function BasketPage() {
                                         >
                                             {product.productName}
                                         </Link>
-                                        <Badge
-                                            size="xs"
-                                            variant="light"
-                                            mt={4}
-                                            color="pink"
-                                        >
+                                        <Badge size="xs" variant="light" mt={4}>
                                             {product.type}
                                         </Badge>
                                     </Stack>
@@ -223,7 +218,6 @@ export default function BasketPage() {
                     size="md"
                     loading={checkoutLoading}
                     onClick={handleCheckout}
-                    color="pink"
                 >
                     Оформить заказ
                 </Button>

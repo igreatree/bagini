@@ -169,7 +169,6 @@ export default function ProfilePage() {
                             mt="md"
                             leftSection={<IconPencil size={18} />}
                             variant="light"
-                            color="pink"
                             onClick={() => setIsEditing(true)}
                         >
                             Редактировать
@@ -213,7 +212,6 @@ export default function ProfilePage() {
                                     type="submit"
                                     leftSection={<IconCheck size={16} />}
                                     loading={loading}
-                                    color="pink"
                                 >
                                     Сохранить
                                 </Button>
