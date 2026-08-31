@@ -15,7 +15,7 @@ export const ProductCard = ({
     images,
     type,
 }: IProductCard) => {
-    const { basket, updateBasket } = useUserStore();
+    const { user, basket, updateBasket } = useUserStore();
     const inBasket = basket.find((item) => item.id === id);
     const router = useRouter();
 
@@ -51,7 +51,8 @@ export const ProductCard = ({
             <Button
                 onClick={(e) => {
                     e.stopPropagation();
-                    updateBasket(id);
+                    if (!user) router.push("/auth");
+                    else updateBasket(id);
                 }}
                 color="pink"
                 leftSection={inBasket ? <IconCheck /> : <IconBasket />}

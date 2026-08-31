@@ -17,8 +17,6 @@ import {
     Divider,
     UnstyledButton,
     Box,
-    Breadcrumbs,
-    Anchor,
     NumberInput,
 } from "@mantine/core";
 import { IconBasket, IconCheck, IconChevronLeft } from "@tabler/icons-react";
@@ -47,7 +45,7 @@ const getCharacteristics = (product: IProduct) => {
 };
 
 export default function ProductPage() {
-    const { basket, updateBasket, basketQuantityChange } = useUserStore();
+    const { user, basket, updateBasket, basketQuantityChange } = useUserStore();
     const { products } = useMockStore();
     const router = useRouter();
     const [activeImage, setActiveImage] = useState(0);
@@ -203,7 +201,10 @@ export default function ProductPage() {
                             )}
 
                             <Button
-                                onClick={() => updateBasket(product.id)}
+                                onClick={() => {
+                                    if (!user) router.push("/auth");
+                                    else updateBasket(product.id);
+                                }}
                                 color="pink"
                                 leftSection={
                                     inBasket ? <IconCheck /> : <IconBasket />
