@@ -22,7 +22,7 @@ const termsItems = [
     },
     {
         value: "privacy-policy",
-        label: "Политика конфиденциальности",
+        label: "Политика обработки персональных данных",
     },
     {
         value: "advertising-consent",

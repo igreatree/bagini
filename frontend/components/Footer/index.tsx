@@ -38,7 +38,7 @@ export const Footer = () => {
                                 color: "var(--mantine-color-pink-filled)",
                             }}
                         >
-                            Политика конфиденциальности
+                            Политика обработки персональных данных
                         </Link>
                         <Link
                             href="/terms/advertising-consent"

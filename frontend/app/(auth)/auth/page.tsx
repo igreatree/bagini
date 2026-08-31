@@ -114,7 +114,7 @@ export default function AuthPage() {
                                         c="pink"
                                         size="xs"
                                     >
-                                        политикой конфиденциальности
+                                        Политикой обработки персональных данных
                                     </Anchor>
                                     {", "}
                                     <Anchor
