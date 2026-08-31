@@ -63,7 +63,7 @@ export const useUserStore = create<UserStoreType>()(
             logout: async () => {
                 await logout();
                 set({ user: null, isLoaded: true });
-                location.href = "/auth";
+                location.href = "/";
             },
             check: async () => {
                 const res = await authCheck();

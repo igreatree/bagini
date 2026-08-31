@@ -97,13 +97,19 @@ export default function BasketPage() {
             <Container size="md" py="xl">
                 <Center py={80}>
                     <Stack align="center" gap="xs">
-                        <IconShoppingCartOff size={48} color="gray" />
+                        <IconShoppingCartOff
+                            size={48}
+                            color="var(--mantine-color-pink-filled)"
+                        />
                         <Text size="lg" fw={500}>
                             Корзина пуста
                         </Text>
                         <Text size="sm" c="dimmed">
                             Добавьте товары, чтобы оформить заказ
                         </Text>
+                        <Button component={Link} href="/">
+                            В каталог
+                        </Button>
                     </Stack>
                 </Center>
             </Container>

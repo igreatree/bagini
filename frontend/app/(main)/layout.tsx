@@ -8,11 +8,13 @@ import {
     Button,
     Group,
     Indicator,
+    Menu,
     ScrollArea,
+    ThemeIcon,
 } from "@mantine/core";
 import Image from "next/image";
 import Link from "next/link";
-import { IconBasket, IconUser } from "@tabler/icons-react";
+import { IconBasket, IconLogout, IconUser } from "@tabler/icons-react";
 import { useUserStore } from "@/store/user";
 import { getInitials } from "@/helpers";
 import { useRouter } from "next/navigation";
@@ -20,7 +22,7 @@ import { HeaderMenu } from "@/components/HeaderMenu";
 import { Footer } from "@/components/Footer";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-    const { user, basket } = useUserStore();
+    const { user, basket, logout } = useUserStore();
     const router = useRouter();
 
     return (
@@ -65,28 +67,52 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                                             <IconBasket />
                                         </ActionIcon>
                                     </Indicator>
-                                    {user.name ? (
-                                        <Avatar
-                                            size={34}
-                                            radius="50%"
-                                            component={Link}
-                                            href="/profile"
-                                            color="pink"
-                                        >
-                                            {getInitials(user)}
-                                        </Avatar>
-                                    ) : (
-                                        <ActionIcon
-                                            variant="outline"
-                                            radius="50%"
-                                            size="lg"
-                                            onClick={() =>
-                                                router.push("/profile")
-                                            }
-                                        >
-                                            <IconUser />
-                                        </ActionIcon>
-                                    )}
+                                    <Menu shadow="md" width={200}>
+                                        <Menu.Target>
+                                            <Box style={{ cursor: "pointer" }}>
+                                                {user.name ? (
+                                                    <Avatar
+                                                        size={34}
+                                                        radius="50%"
+                                                        color="pink"
+                                                    >
+                                                        {getInitials(user)}
+                                                    </Avatar>
+                                                ) : (
+                                                    <ThemeIcon
+                                                        variant="outline"
+                                                        radius="50%"
+                                                        size="lg"
+                                                    >
+                                                        <IconUser />
+                                                    </ThemeIcon>
+                                                )}
+                                            </Box>
+                                        </Menu.Target>
+
+                                        <Menu.Dropdown>
+                                            <Menu.Item
+                                                leftSection={
+                                                    <IconUser size={14} />
+                                                }
+                                                component={Link}
+                                                href="/profile"
+                                            >
+                                                Профиль
+                                            </Menu.Item>
+
+                                            <Menu.Divider />
+                                            <Menu.Item
+                                                color="pink"
+                                                onClick={logout}
+                                                leftSection={
+                                                    <IconLogout size={14} />
+                                                }
+                                            >
+                                                Выйти
+                                            </Menu.Item>
+                                        </Menu.Dropdown>
+                                    </Menu>
                                 </>
                             ) : (
                                 <Button
@@ -102,7 +128,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </AppShell.Header>
             <AppShell.Main style={{ height: "100vh", overflow: "hidden" }}>
                 <ScrollArea h="100%">
-                    <Box p="sm">{children}</Box>
+                    <Box p="sm" mih="calc(100vh - 60px)">
+                        {children}
+                    </Box>
                     <Footer />
                 </ScrollArea>
             </AppShell.Main>
