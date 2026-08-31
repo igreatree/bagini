@@ -13,6 +13,7 @@ import {
     Transition,
     TextInput,
     RollingNumber,
+    Checkbox,
 } from "@mantine/core";
 import { useMask } from "@mantine/hooks";
 import { redirect } from "next/navigation";
@@ -20,7 +21,14 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function AuthPage() {
-    const { sendSmsCode, verifySmsCode, updateUser, user } = useUserStore();
+    const {
+        sendSmsCode,
+        verifySmsCode,
+        updateUser,
+        user,
+        authTermsApplied,
+        setAuthTermsApplied,
+    } = useUserStore();
     const [step, setStep] = useState<"sendCode" | "verifyCode" | "fillProfile">(
         "sendCode",
     );
@@ -92,33 +100,52 @@ export default function AuthPage() {
                             mask="+7 (999) 999-99-99"
                             placeholder="+7 (___) ___-__-__"
                         />
+                        <Checkbox
+                            checked={authTermsApplied}
+                            onChange={(e) =>
+                                setAuthTermsApplied(e.target.checked)
+                            }
+                            styles={{ body: { alignItems: "center" } }}
+                            label={
+                                <Text size="xs" c="dimmed" w={320}>
+                                    Ознакомлен и согласен с{" "}
+                                    <Anchor
+                                        href="/terms/privacy-policy"
+                                        c="pink"
+                                        size="xs"
+                                    >
+                                        политикой конфиденциальности
+                                    </Anchor>
+                                    {", "}
+                                    <Anchor
+                                        component={Link}
+                                        href="/terms/cookie-consent"
+                                        c="pink"
+                                        size="xs"
+                                    >
+                                        обработкой cookie и метрическими данными
+                                    </Anchor>
+                                    и{" "}
+                                    <Anchor
+                                        component={Link}
+                                        href="/terms/public-offer"
+                                        c="pink"
+                                        size="xs"
+                                    >
+                                        публичной офертой
+                                    </Anchor>
+                                </Text>
+                            }
+                        />
                         <Button
-                            disabled={rawValue.length !== 10}
+                            disabled={
+                                rawValue.length !== 10 || !authTermsApplied
+                            }
                             size="lg"
                             onClick={sendCodeHandler}
                         >
                             Получить код
                         </Button>
-                        <Text size="xs" c="dimmed" ta="center" w={320}>
-                            Продолжая, вы соглашаетесь с{" "}
-                            <Anchor
-                                component={Link}
-                                href="/terms/privacy-policy"
-                                c="pink"
-                                size="xs"
-                            >
-                                политикой конфиденциальности
-                            </Anchor>{" "}
-                            и{" "}
-                            <Anchor
-                                component={Link}
-                                href="/terms/public-offer"
-                                c="pink"
-                                size="xs"
-                            >
-                                публичной офертой
-                            </Anchor>
-                        </Text>
                     </Stack>
                 )}
             </Transition>

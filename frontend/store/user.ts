@@ -9,6 +9,8 @@ type UserStoreType = {
     phone: string | null;
     isLoaded: boolean;
     basket: { id: string; count: number }[];
+    authTermsApplied: boolean;
+    setAuthTermsApplied: (val: boolean) => void;
     sendSmsCode: (phone: string) => Promise<boolean>;
     verifySmsCode: (code: string) => Promise<UserType | null>;
     updateUser: (
@@ -28,6 +30,7 @@ export const useUserStore = create<UserStoreType>()(
             phone: null,
             isLoaded: false,
             basket: [],
+            authTermsApplied: false,
             sendSmsCode: async (phone) => {
                 const res = await sendSmsCode(phone);
                 if ("success" in res) {
@@ -93,13 +96,15 @@ export const useUserStore = create<UserStoreType>()(
                     ),
                 }));
             },
+            setAuthTermsApplied: (val) => set({ authTermsApplied: val }),
         }),
         {
             name: "user-store",
             version: 1,
-            partialize: ({ user, basket }) => ({
+            partialize: ({ user, basket, authTermsApplied }) => ({
                 user,
                 basket,
+                authTermsApplied,
             }),
         },
     ),

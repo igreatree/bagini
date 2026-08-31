@@ -20,6 +20,7 @@ import { getInitials } from "@/helpers";
 import { useRouter } from "next/navigation";
 import { HeaderMenu } from "@/components/HeaderMenu";
 import { Footer } from "@/components/Footer";
+import { CookieBanner } from "@/components/CookieBanner";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
     const { user, basket, logout } = useUserStore();
@@ -132,6 +133,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         {children}
                     </Box>
                     <Footer />
+                    <CookieBanner />
                 </ScrollArea>
             </AppShell.Main>
         </AppShell>
