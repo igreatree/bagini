@@ -38,11 +38,10 @@ export const CookieBanner = () => {
                 right: 20,
             }}
         >
+            <Text fw={600} size="lg" mb="lg">
+                Использование файлов cookie
+            </Text>
             <Stack gap="xs">
-                <Text fw={600} size="lg">
-                    Использование файлов cookie
-                </Text>
-
                 <Text size="sm" c="dimmed">
                     Мы используем файлы cookie и метрические данные, чтобы сайт
                     работал корректно, а также для анализа посещаемости и
