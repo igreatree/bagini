@@ -38,7 +38,7 @@ export const CookieBanner = () => {
                 right: 20,
             }}
         >
-            <Stack gap="md">
+            <Stack gap="xs">
                 <Text fw={600} size="lg">
                     Использование файлов cookie
                 </Text>
