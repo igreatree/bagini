@@ -14,6 +14,8 @@ import {
     NumberInput,
     Badge,
     Center,
+    Checkbox,
+    Anchor,
 } from "@mantine/core";
 import { IconTrash, IconShoppingCartOff } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
@@ -22,6 +24,7 @@ import { IProduct } from "@/types";
 import { useMockStore } from "@/store/mock";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface BasketItem {
     product: IProduct;
@@ -37,9 +40,17 @@ function formatPrice(value: number) {
 }
 
 export default function BasketPage() {
-    const { basket, updateBasket, basketQuantityChange } = useUserStore();
+    const {
+        user,
+        basket,
+        updateBasket,
+        basketQuantityChange,
+        buyTermsApplied,
+        setBuyTermsApplied,
+    } = useUserStore();
     const { products } = useMockStore();
     const [checkoutLoading, setCheckoutLoading] = useState(false);
+    const router = useRouter();
 
     const items: BasketItem[] = useMemo(() => {
         return basket.map((item) => {
@@ -219,11 +230,42 @@ export default function BasketPage() {
                         {formatPrice(total)}
                     </Text>
                 </Group>
+                <Checkbox
+                    checked={buyTermsApplied}
+                    onChange={(e) => setBuyTermsApplied(e.target.checked)}
+                    styles={{ body: { alignItems: "center" } }}
+                    mb="md"
+                    label={
+                        <Text size="xs" c="dimmed">
+                            Ознакомлен и согласен с{" "}
+                            <Anchor
+                                href="/terms/payment-and-delivery"
+                                c="pink"
+                                size="xs"
+                            >
+                                правилами оплаты и доставки
+                            </Anchor>
+                            {" и "}
+                            <Anchor
+                                component={Link}
+                                href="/terms/return-policy"
+                                c="pink"
+                                size="xs"
+                            >
+                                правилами возврата и обмена товара
+                            </Anchor>
+                        </Text>
+                    }
+                />
                 <Button
                     fullWidth
                     size="md"
                     loading={checkoutLoading}
-                    onClick={handleCheckout}
+                    disabled={!buyTermsApplied}
+                    onClick={() => {
+                        if (!user) router.push("/auth");
+                        handleCheckout();
+                    }}
                 >
                     Оформить заказ
                 </Button>

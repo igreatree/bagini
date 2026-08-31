@@ -48,73 +48,67 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                             <Box visibleFrom="sm">
                                 <HeaderMenu />
                             </Box>
+                            <Indicator
+                                inline
+                                label={basket.length}
+                                size={16}
+                                offset={2}
+                                disabled={!basket.length}
+                            >
+                                <ActionIcon
+                                    variant="outline"
+                                    radius="50%"
+                                    size="lg"
+                                    onClick={() => router.push("/basket")}
+                                >
+                                    <IconBasket />
+                                </ActionIcon>
+                            </Indicator>
                             {user ? (
-                                <>
-                                    <Indicator
-                                        inline
-                                        label={basket.length}
-                                        size={16}
-                                        offset={2}
-                                        disabled={!basket.length}
-                                    >
-                                        <ActionIcon
-                                            variant="outline"
-                                            radius="50%"
-                                            size="lg"
-                                            onClick={() =>
-                                                router.push("/basket")
+                                <Menu shadow="md" width={200}>
+                                    <Menu.Target>
+                                        <Box style={{ cursor: "pointer" }}>
+                                            {user.name ? (
+                                                <Avatar
+                                                    size={34}
+                                                    radius="50%"
+                                                    color="pink"
+                                                >
+                                                    {getInitials(user)}
+                                                </Avatar>
+                                            ) : (
+                                                <ThemeIcon
+                                                    variant="outline"
+                                                    radius="50%"
+                                                    size="lg"
+                                                >
+                                                    <IconUser />
+                                                </ThemeIcon>
+                                            )}
+                                        </Box>
+                                    </Menu.Target>
+
+                                    <Menu.Dropdown>
+                                        <Menu.Item
+                                            leftSection={<IconUser size={14} />}
+                                            component={Link}
+                                            href="/profile"
+                                        >
+                                            Профиль
+                                        </Menu.Item>
+
+                                        <Menu.Divider />
+                                        <Menu.Item
+                                            color="pink"
+                                            onClick={logout}
+                                            leftSection={
+                                                <IconLogout size={14} />
                                             }
                                         >
-                                            <IconBasket />
-                                        </ActionIcon>
-                                    </Indicator>
-                                    <Menu shadow="md" width={200}>
-                                        <Menu.Target>
-                                            <Box style={{ cursor: "pointer" }}>
-                                                {user.name ? (
-                                                    <Avatar
-                                                        size={34}
-                                                        radius="50%"
-                                                        color="pink"
-                                                    >
-                                                        {getInitials(user)}
-                                                    </Avatar>
-                                                ) : (
-                                                    <ThemeIcon
-                                                        variant="outline"
-                                                        radius="50%"
-                                                        size="lg"
-                                                    >
-                                                        <IconUser />
-                                                    </ThemeIcon>
-                                                )}
-                                            </Box>
-                                        </Menu.Target>
-
-                                        <Menu.Dropdown>
-                                            <Menu.Item
-                                                leftSection={
-                                                    <IconUser size={14} />
-                                                }
-                                                component={Link}
-                                                href="/profile"
-                                            >
-                                                Профиль
-                                            </Menu.Item>
-
-                                            <Menu.Divider />
-                                            <Menu.Item
-                                                color="pink"
-                                                onClick={logout}
-                                                leftSection={
-                                                    <IconLogout size={14} />
-                                                }
-                                            >
-                                                Выйти
-                                            </Menu.Item>
-                                        </Menu.Dropdown>
-                                    </Menu>
-                                </>
+                                            Выйти
+                                        </Menu.Item>
+                                    </Menu.Dropdown>
+                                </Menu>
                             ) : (
                                 <Button
                                     variant="outline"

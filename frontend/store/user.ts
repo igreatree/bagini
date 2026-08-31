@@ -10,7 +10,7 @@ type UserStoreType = {
     isLoaded: boolean;
     basket: { id: string; count: number }[];
     authTermsApplied: boolean;
-    setAuthTermsApplied: (val: boolean) => void;
+    buyTermsApplied: boolean;
     sendSmsCode: (phone: string) => Promise<boolean>;
     verifySmsCode: (code: string) => Promise<UserType | null>;
     updateUser: (
@@ -21,6 +21,8 @@ type UserStoreType = {
     check: () => Promise<boolean>;
     updateBasket: (id: string) => void;
     basketQuantityChange: (id: string, count: number) => void;
+    setAuthTermsApplied: (val: boolean) => void;
+    setBuyTermsApplied: (val: boolean) => void;
 };
 
 export const useUserStore = create<UserStoreType>()(
@@ -31,6 +33,7 @@ export const useUserStore = create<UserStoreType>()(
             isLoaded: false,
             basket: [],
             authTermsApplied: false,
+            buyTermsApplied: false,
             sendSmsCode: async (phone) => {
                 const res = await sendSmsCode(phone);
                 if ("success" in res) {
@@ -97,14 +100,21 @@ export const useUserStore = create<UserStoreType>()(
                 }));
             },
             setAuthTermsApplied: (val) => set({ authTermsApplied: val }),
+            setBuyTermsApplied: (val) => set({ buyTermsApplied: val }),
         }),
         {
             name: "user-store",
             version: 1,
-            partialize: ({ user, basket, authTermsApplied }) => ({
+            partialize: ({
                 user,
                 basket,
                 authTermsApplied,
+                buyTermsApplied,
+            }) => ({
+                user,
+                basket,
+                authTermsApplied,
+                buyTermsApplied,
             }),
         },
     ),

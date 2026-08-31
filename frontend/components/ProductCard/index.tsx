@@ -51,8 +51,7 @@ export const ProductCard = ({
             <Button
                 onClick={(e) => {
                     e.stopPropagation();
-                    if (!user) router.push("/auth");
-                    else updateBasket(id);
+                    updateBasket(id);
                 }}
                 leftSection={inBasket ? <IconCheck /> : <IconBasket />}
                 fullWidth

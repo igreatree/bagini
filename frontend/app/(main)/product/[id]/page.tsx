@@ -200,10 +200,7 @@ export default function ProductPage() {
                             )}
 
                             <Button
-                                onClick={() => {
-                                    if (!user) router.push("/auth");
-                                    else updateBasket(product.id);
-                                }}
+                                onClick={() => updateBasket(product.id)}
                                 leftSection={
                                     inBasket ? <IconCheck /> : <IconBasket />
                                 }
