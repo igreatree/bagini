@@ -10,15 +10,8 @@ export const CookieBanner = () => {
     const { authTermsApplied, setAuthTermsApplied } = useUserStore();
 
     useEffect(() => {
-        if (!authTermsApplied) {
-            setOpened(true);
-        }
+        setOpened(!authTermsApplied);
     }, [authTermsApplied]);
-
-    const handleConsent = (value: boolean) => {
-        setAuthTermsApplied(value);
-        setOpened(false);
-    };
 
     if (!opened) {
         return null;
@@ -87,12 +80,14 @@ export const CookieBanner = () => {
                 <Group justify="flex-end">
                     <Button
                         variant="default"
-                        onClick={() => handleConsent(false)}
+                        onClick={() => setAuthTermsApplied(false)}
                     >
                         Отказаться
                     </Button>
 
-                    <Button onClick={() => handleConsent(true)}>Принять</Button>
+                    <Button onClick={() => setAuthTermsApplied(true)}>
+                        Принять
+                    </Button>
                 </Group>
             </Stack>
         </Paper>
