@@ -80,7 +80,10 @@ export const CookieBanner = () => {
                 <Group justify="flex-end">
                     <Button
                         variant="default"
-                        onClick={() => setAuthTermsApplied(false)}
+                        onClick={() => {
+                            setAuthTermsApplied(false);
+                            setOpened(false);
+                        }}
                     >
                         Отказаться
                     </Button>
