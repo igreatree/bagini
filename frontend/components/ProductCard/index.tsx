@@ -3,7 +3,7 @@
 import { formatPrice } from "@/helpers";
 import { useUserStore } from "@/store/user";
 import { IProductCard } from "@/types";
-import { Card, Badge, Button, Text } from "@mantine/core";
+import { Card, Badge, Button, Text, Stack } from "@mantine/core";
 import { IconBasket, IconCheck } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -15,19 +15,22 @@ export const ProductCard = ({
     images,
     type,
 }: IProductCard) => {
-    const { user, basket, updateBasket } = useUserStore();
+    const { basket, updateBasket } = useUserStore();
     const inBasket = basket.find((item) => item.id === id);
     const router = useRouter();
 
     return (
         <Card
-            miw={300}
             shadow="sm"
-            padding="lg"
+            padding={0}
             bg="#ffffff9c"
             onClick={() => router.push(`/product/${id}`)}
         >
-            <Card.Section style={{ display: "flex", justifyContent: "center" }}>
+            <Card.Section
+                pos="relative"
+                w="100%"
+                style={{ aspectRatio: "3/4" }}
+            >
                 <Badge
                     style={{ position: "absolute", right: 10, top: 10 }}
                     color="red"
@@ -36,30 +39,33 @@ export const ProductCard = ({
                 </Badge>
                 <Image
                     src={`/mock/images/${images[0]}`}
-                    height={260}
-                    width={200}
-                    alt="Norway"
+                    fill
+                    alt="product"
+                    style={{
+                        objectFit: "contain",
+                    }}
                 />
             </Card.Section>
-            <Badge size="xs" variant="light" mb="sm" mt="md">
-                {type}
-            </Badge>
-            <Text fw={500} lineClamp={2} title={productName}>
-                {productName}
-            </Text>
+            <Stack p="sm" gap="xs">
+                <Badge size="xs" variant="light">
+                    {type}
+                </Badge>
+                <Text fw={500} lineClamp={2} title={productName}>
+                    {productName}
+                </Text>
 
-            <Button
-                onClick={(e) => {
-                    e.stopPropagation();
-                    updateBasket(id);
-                }}
-                leftSection={inBasket ? <IconCheck /> : <IconBasket />}
-                fullWidth
-                mt="md"
-                variant={inBasket ? "outline" : "filled"}
-            >
-                {formatPrice(price)}₽
-            </Button>
+                <Button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        updateBasket(id);
+                    }}
+                    leftSection={inBasket ? <IconCheck /> : <IconBasket />}
+                    fullWidth
+                    variant={inBasket ? "outline" : "filled"}
+                >
+                    {formatPrice(price)}₽
+                </Button>
+            </Stack>
         </Card>
     );
 };
