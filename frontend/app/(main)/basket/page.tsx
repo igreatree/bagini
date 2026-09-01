@@ -105,7 +105,7 @@ export default function BasketPage() {
 
     if (items.length === 0) {
         return (
-            <Container size="md" py="xl">
+            <Container size="xl" p={0}>
                 <Center py={80}>
                     <Stack align="center" gap="xs">
                         <IconShoppingCartOff
@@ -128,7 +128,7 @@ export default function BasketPage() {
     }
 
     return (
-        <Container size="md" px={0}>
+        <Container size="xl" p={0}>
             <Group mb="lg">
                 <Title order={2}>Корзина</Title>
                 <Title order={3} c="pink">

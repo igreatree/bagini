@@ -64,7 +64,7 @@ export default function ProductPage() {
     };
 
     return (
-        <Container size="lg" p={0}>
+        <Container size="xl" p={0}>
             {/* <Breadcrumbs mb="lg">
                 <Anchor size="sm" onClick={() => router.push("/")} c="pink">
                     Главная
@@ -94,20 +94,16 @@ export default function ProductPage() {
                 <Grid.Col span={{ base: 12, sm: 5 }}>
                     <Stack gap="sm">
                         <Paper
-                            withBorder
                             radius="md"
                             style={{
-                                display: "flex",
-                                justifyContent: "center",
-                                alignItems: "center",
                                 position: "relative",
+                                aspectRatio: "3/4",
                             }}
                         >
                             <Image
                                 src={`/mock/images/${product.images[activeImage]}`}
                                 alt={product.productName}
-                                height={400}
-                                width={320}
+                                fill
                                 style={{ objectFit: "contain" }}
                             />
                         </Paper>
@@ -130,14 +126,16 @@ export default function ProductPage() {
                                                 borderWidth:
                                                     activeImage === index
                                                         ? 2
-                                                        : 1,
+                                                        : 0,
+                                                position: "relative",
+                                                aspectRatio: "3/4",
                                             }}
+                                            miw={80}
                                         >
                                             <Image
                                                 src={`/mock/images/${image}`}
                                                 alt={`${product.productName} ${index + 1}`}
-                                                height={64}
-                                                width={64}
+                                                fill
                                                 style={{ objectFit: "contain" }}
                                             />
                                         </Paper>
