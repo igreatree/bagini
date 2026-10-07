@@ -50,3 +50,27 @@ export type IProductCard = Pick<
     IProduct,
     "productName" | "price" | "images" | "type" | "id"
 >;
+
+export type CreateOrderType = {
+    items: { productId: string; quantity: number }[];
+    recipientName: string;
+    city: string;
+    address: string;
+    postalCode?: string;
+    comment?: string;
+};
+
+export type OrderType = {
+    id: number;
+    status: "pending" | "paid" | "cancelled";
+    itemsTotal: number;
+    deliveryPrice: number;
+    total: number;
+};
+
+export type OrderQuoteType = {
+    itemsTotal: number;
+    deliveryPrice: number;
+    freeDeliveryFrom: number;
+    total: number;
+};

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
     Container,
     Paper,
@@ -16,11 +16,15 @@ import {
     Center,
     Checkbox,
     Anchor,
+    TextInput,
+    Textarea,
 } from "@mantine/core";
+import { useForm } from "@mantine/form";
 import { IconTrash, IconShoppingCartOff } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { useUserStore } from "@/store/user";
-import { IProduct } from "@/types";
+import { calculateOrder, createOrder } from "@/api/order";
+import { IProduct, OrderQuoteType } from "@/types";
 import { useMockStore } from "@/store/mock";
 import Image from "next/image";
 import Link from "next/link";
@@ -50,7 +54,47 @@ export default function BasketPage() {
     } = useUserStore();
     const { products } = useMockStore();
     const [checkoutLoading, setCheckoutLoading] = useState(false);
+    const [quote, setQuote] = useState<OrderQuoteType | null>(null);
     const router = useRouter();
+
+    const form = useForm({
+        initialValues: {
+            recipientName: [user?.name, user?.lastName]
+                .filter(Boolean)
+                .join(" "),
+            city: "",
+            address: "",
+            postalCode: "",
+            comment: "",
+        },
+        validate: {
+            recipientName: (value: string) =>
+                value.trim().length < 2 ? "Укажите получателя" : null,
+            city: (value: string) =>
+                value.trim().length < 2 ? "Укажите город" : null,
+            address: (value: string) =>
+                value.trim().length < 5
+                    ? "Укажите улицу, дом и квартиру"
+                    : null,
+            postalCode: (value: string) =>
+                value && !/^\d{6}$/.test(value)
+                    ? "Индекс состоит из 6 цифр"
+                    : null,
+        },
+    });
+
+    useEffect(() => {
+        if (basket.length === 0) return;
+        let actual = true;
+        calculateOrder(
+            basket.map(({ id, count }) => ({ productId: id, quantity: count })),
+        ).then((res) => {
+            if (actual && "deliveryPrice" in res) setQuote(res);
+        });
+        return () => {
+            actual = false;
+        };
+    }, [basket]);
 
     const items: BasketItem[] = useMemo(() => {
         return basket.map((item) => {
@@ -80,11 +124,27 @@ export default function BasketPage() {
         });
     };
 
-    const handleCheckout = async () => {
+    const handleCheckout = async (values: typeof form.values) => {
         try {
             setCheckoutLoading(true);
-            // await onCheckout?.(items);
-            console.log({ items });
+            const res = await createOrder({
+                items: items.map(({ product, quantity }) => ({
+                    productId: product.id,
+                    quantity,
+                })),
+                recipientName: values.recipientName.trim(),
+                city: values.city.trim(),
+                address: values.address.trim(),
+                postalCode: values.postalCode || undefined,
+                comment: values.comment.trim() || undefined,
+            });
+            if ("order" in res) {
+                notifications.show({
+                    title: "Заказ создан",
+                    message: `Заказ №${res.order.id} на сумму ${formatPrice(res.order.total)}`,
+                    color: "green",
+                });
+            }
         } finally {
             setCheckoutLoading(false);
         }
@@ -223,11 +283,75 @@ export default function BasketPage() {
 
             <Divider my="lg" />
 
+            <Paper withBorder radius="md" p="lg" mb="md">
+                <Title order={4} mb="md">
+                    Доставка
+                </Title>
+                <Stack gap="sm">
+                    <TextInput
+                        label="Получатель"
+                        placeholder="Имя и фамилия"
+                        {...form.getInputProps("recipientName")}
+                    />
+                    <Group grow align="flex-start">
+                        <TextInput
+                            label="Город"
+                            {...form.getInputProps("city")}
+                        />
+                        <TextInput
+                            label="Индекс"
+                            placeholder="Необязательно"
+                            maxLength={6}
+                            {...form.getInputProps("postalCode")}
+                        />
+                    </Group>
+                    <TextInput
+                        label="Адрес"
+                        placeholder="Улица, дом, квартира"
+                        {...form.getInputProps("address")}
+                    />
+                    <Textarea
+                        label="Комментарий"
+                        placeholder="Необязательно"
+                        autosize
+                        minRows={2}
+                        maxLength={500}
+                        {...form.getInputProps("comment")}
+                    />
+                </Stack>
+            </Paper>
+
             <Paper withBorder radius="md" p="lg">
-                <Group justify="space-between" mb="md">
+                <Group justify="space-between" mb="xs">
+                    <Text c="dimmed">Товары</Text>
+                    <Text>{formatPrice(total)}</Text>
+                </Group>
+                <Group justify="space-between" mb={4}>
+                    <Text c="dimmed">Доставка</Text>
+                    <Text>
+                        {quote === null
+                            ? "—"
+                            : quote.deliveryPrice > 0
+                              ? formatPrice(quote.deliveryPrice)
+                              : "Бесплатно"}
+                    </Text>
+                </Group>
+                {quote !== null &&
+                    quote.deliveryPrice > 0 &&
+                    quote.freeDeliveryFrom > quote.itemsTotal && (
+                        <Text size="xs" c="dimmed" mb="md">
+                            Бесплатная доставка от{" "}
+                            {formatPrice(quote.freeDeliveryFrom)}, осталось
+                            добавить на{" "}
+                            {formatPrice(
+                                quote.freeDeliveryFrom - quote.itemsTotal,
+                            )}
+                        </Text>
+                    )}
+                <Group justify="space-between" mb="md" mt="md">
                     <Text size="lg">Итого</Text>
                     <Text size="xl" fw={700}>
-                        {formatPrice(total)}
+                        {formatPrice(total + (quote?.deliveryPrice ?? 0))}
                     </Text>
                 </Group>
                 <Checkbox
@@ -263,8 +387,12 @@ export default function BasketPage() {
                     loading={checkoutLoading}
                     disabled={!buyTermsApplied}
                     onClick={() => {
-                        if (!user) router.push("/auth");
-                        handleCheckout();
+                        if (!user) {
+                            router.push("/auth");
+                            return;
+                        }
+                        if (form.validate().hasErrors) return;
+                        handleCheckout(form.getValues());
                     }}
                 >
                     Оформить заказ

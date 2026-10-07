@@ -24,6 +24,48 @@ model User {
     
     role             UserRole           @default(user)
 
+    orders           Order[]
+
     createdAt        DateTime           @default(now())
     updatedAt        DateTime           @updatedAt
+}
+
+enum OrderStatus {
+    pending
+    paid
+    cancelled
+}
+
+model Order {
+    id               Int                @id @default(autoincrement())
+    userId           Int
+    user             User               @relation(fields: [userId], references: [id])
+
+    status           OrderStatus        @default(pending)
+
+    itemsTotal       Int
+    deliveryPrice    Int
+    total            Int
+
+    recipientName    String
+    city             String
+    address          String
+    postalCode       String?
+    comment          String?
+
+    items            OrderItem[]
+
+    createdAt        DateTime           @default(now())
+    updatedAt        DateTime           @updatedAt
+}
+
+model OrderItem {
+    id               Int                @id @default(autoincrement())
+    orderId          Int
+    order            Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+    productId        String
+    productName      String
+    price            Int
+    quantity         Int
 }
