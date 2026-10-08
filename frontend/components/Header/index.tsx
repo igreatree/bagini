@@ -10,7 +10,12 @@ import {
     Button,
     Box,
 } from "@mantine/core";
-import { IconBasket, IconUser, IconLogout } from "@tabler/icons-react";
+import {
+    IconBasket,
+    IconUser,
+    IconLogout,
+    IconReceipt,
+} from "@tabler/icons-react";
 import { HeaderMenu } from "../HeaderMenu";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "@/store/user";
@@ -92,6 +97,13 @@ export const Header = () => {
                                         href="/profile"
                                     >
                                         Профиль
+                                    </Menu.Item>
+                                    <Menu.Item
+                                        leftSection={<IconReceipt size={14} />}
+                                        component={Link}
+                                        href="/orders"
+                                    >
+                                        Мои заказы
                                     </Menu.Item>
 
                                     <Menu.Divider />
