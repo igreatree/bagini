@@ -43,6 +43,13 @@ model Order {
 
     status           OrderStatus        @default(pending)
 
+    // extId — идентификатор заказа на стороне магазина (уникален для Ozon),
+    // ozonOrderId — идентификатор заказа на стороне эквайринга
+    extId            String             @unique @default(uuid())
+    ozonOrderId      String?            @unique
+    paymentUrl       String?
+    paidAt           DateTime?
+
     itemsTotal       Int
     deliveryPrice    Int
     total            Int

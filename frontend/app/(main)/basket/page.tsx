@@ -125,6 +125,7 @@ export default function BasketPage() {
     };
 
     const handleCheckout = async (values: typeof form.values) => {
+        let redirecting = false;
         try {
             setCheckoutLoading(true);
             const res = await createOrder({
@@ -138,15 +139,13 @@ export default function BasketPage() {
                 postalCode: values.postalCode || undefined,
                 comment: values.comment.trim() || undefined,
             });
-            if ("order" in res) {
-                notifications.show({
-                    title: "Заказ создан",
-                    message: `Заказ №${res.order.id} на сумму ${formatPrice(res.order.total)}`,
-                    color: "green",
-                });
+            if ("order" in res && res.order.paymentUrl) {
+                redirecting = true;
+                window.location.href = res.order.paymentUrl;
             }
         } finally {
-            setCheckoutLoading(false);
+            // Во время перехода на страницу оплаты Ozon кнопка остаётся заблокированной
+            if (!redirecting) setCheckoutLoading(false);
         }
     };
 

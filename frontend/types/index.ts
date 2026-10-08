@@ -66,6 +66,7 @@ export type OrderType = {
     itemsTotal: number;
     deliveryPrice: number;
     total: number;
+    paymentUrl: string | null;
 };
 
 export type OrderQuoteType = {

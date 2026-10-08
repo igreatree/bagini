@@ -31,3 +31,16 @@ export const createOrder = async (
         return error as ErrorResponseType;
     }
 };
+
+export const getOrder = async (
+    id: number,
+): Promise<{ order: OrderType } | ErrorResponseType> => {
+    try {
+        const response = await Api.get(`/order/${id}`);
+
+        return response.data;
+    } catch (error) {
+        console.error("getOrder error:", error);
+        return error as ErrorResponseType;
+    }
+};

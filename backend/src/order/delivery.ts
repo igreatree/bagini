@@ -14,9 +14,9 @@ export const calculateDelivery = (itemsTotal: number) => {
         process.env.DELIVERY_PRICE,
         DEFAULT_DELIVERY_PRICE,
     );
-    // 0 в DELIVERY_FREE_FROM отключает бесплатную доставку
+    // 0 в FREE_DELIVERY_FROM отключает бесплатную доставку
     const freeFrom = readRubles(
-        process.env.DELIVERY_FREE_FROM,
+        process.env.FREE_DELIVERY_FROM,
         DEFAULT_FREE_DELIVERY_FROM,
     );
     const isFree = freeFrom > 0 && itemsTotal >= freeFrom;

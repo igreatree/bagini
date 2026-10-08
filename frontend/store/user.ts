@@ -21,6 +21,7 @@ type UserStoreType = {
     check: () => Promise<boolean>;
     updateBasket: (id: string) => void;
     basketQuantityChange: (id: string, count: number) => void;
+    clearBasket: () => void;
     setAuthTermsApplied: (val: boolean) => void;
     setBuyTermsApplied: (val: boolean) => void;
 };
@@ -99,6 +100,7 @@ export const useUserStore = create<UserStoreType>()(
                     ),
                 }));
             },
+            clearBasket: () => set({ basket: [] }),
             setAuthTermsApplied: (val) => set({ authTermsApplied: val }),
             setBuyTermsApplied: (val) => set({ buyTermsApplied: val }),
         }),
