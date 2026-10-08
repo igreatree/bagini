@@ -43,7 +43,7 @@ describe("OzonService", () => {
         expect(body).toMatchObject({
             accessKey: "access",
             extId: "ext-7",
-            amount: { currencyCode: "643", value: "1980" },
+            amount: { currencyCode: "643", value: "198000" },
             successUrl: "https://shop.test/order/7",
             failUrl: "https://shop.test/order/7",
         });
@@ -53,7 +53,7 @@ describe("OzonService", () => {
                 extId: "ext-7",
                 paymentAlgorithm: "PAY_ALGO_SMS",
                 currencyCode: "643",
-                amount: "1980",
+                amount: "198000",
                 secretKey: "secret",
             }),
         );

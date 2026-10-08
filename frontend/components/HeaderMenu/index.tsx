@@ -13,11 +13,17 @@ import { useDisclosure } from "@mantine/hooks";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { useUserStore } from "@/store/user";
 
 const menuItems = [
     {
         label: "Каталог",
         href: "/",
+    },
+    {
+        label: "Мои заказы",
+        href: "/orders",
+        authOnly: true,
     },
     {
         label: "Оплата и доставка",
@@ -48,6 +54,8 @@ const menuItems = [
 export const HeaderMenu = (props: BurgerProps) => {
     const [opened, { open, close }] = useDisclosure(false);
     const pathname = usePathname();
+    const { user } = useUserStore();
+    const items = menuItems.filter((item) => !item.authOnly || user);
 
     return (
         <>
@@ -75,7 +83,7 @@ export const HeaderMenu = (props: BurgerProps) => {
                 size="md"
             >
                 <Stack gap="xs" flex={1}>
-                    {menuItems.map((item) => (
+                    {items.map((item) => (
                         <NavLink
                             key={item.href}
                             component={Link}

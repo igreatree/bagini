@@ -17,10 +17,8 @@ const DEFAULT_API_URL = "https://payapi.ozon.ru";
 const CURRENCY_RUB = "643";
 const PAYMENT_ALGORITHM = "PAY_ALGO_SMS";
 
-// Единицы amount.value в документации (в рублях или в копейках) нужно
-// сверить в тестовом режиме токена: на странице оплаты должна быть
-// правильная сумма.
-const toOzonAmount = (rubles: number) => String(rubles);
+// amount.value передаётся в копейках (1980 ₽ → "198000")
+const toOzonAmount = (rubles: number) => String(rubles * 100);
 
 // Название поля со ссылкой на оплату в ответе createOrder не подтверждено
 // документацией, поэтому перебираем известные варианты.

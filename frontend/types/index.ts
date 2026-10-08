@@ -60,9 +60,21 @@ export type CreateOrderType = {
     comment?: string;
 };
 
+export type OrderStatusType = "pending" | "paid" | "cancelled";
+
+export type OrderItemType = {
+    id: number;
+    productId: string;
+    productName: string;
+    price: number;
+    quantity: number;
+};
+
 export type OrderType = {
     id: number;
-    status: "pending" | "paid" | "cancelled";
+    status: OrderStatusType;
+    createdAt: string;
+    items: OrderItemType[];
     itemsTotal: number;
     deliveryPrice: number;
     total: number;

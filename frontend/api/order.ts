@@ -44,3 +44,16 @@ export const getOrder = async (
         return error as ErrorResponseType;
     }
 };
+
+export const getOrders = async (): Promise<
+    { orders: OrderType[] } | ErrorResponseType
+> => {
+    try {
+        const response = await Api.get("/order");
+
+        return response.data;
+    } catch (error) {
+        console.error("getOrders error:", error);
+        return error as ErrorResponseType;
+    }
+};

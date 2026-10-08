@@ -53,6 +53,13 @@ export class OrderController {
     }
 
     @UseGuards(JwtCookieAuthGuard)
+    @Get()
+    async findAll(@Request() req) {
+        const orders = await this.orderService.findAll(req.user.id);
+        return { orders };
+    }
+
+    @UseGuards(JwtCookieAuthGuard)
     @Get(":id")
     async findOne(@Request() req, @Param("id", ParseIntPipe) id: number) {
         const order = await this.orderService.findOne(req.user.id, id);
