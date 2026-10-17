@@ -12,10 +12,11 @@ const SELLER_API_URL = "https://api-seller.ozon.ru";
 // Максимум для /v3/product/list и /v3/product/info/list
 const BATCH_SIZE = 1000;
 const MAX_LIST_PAGES = 50;
-// Продаём только товары, которые видны покупателям на Ozon
-const PRODUCT_VISIBILITY = "VISIBLE";
+// "В продаже": товар активен и есть на складе (VISIBLE включает и товары без остатков)
+const PRODUCT_VISIBILITY = "IN_SALE";
 const LIST_CACHE_KEY = "catalog:products";
-const LIST_CACHE_TTL = 5 * 60;
+// Остатки меняются часто, поэтому кэш короткий
+const LIST_CACHE_TTL = 60;
 const DESCRIPTION_CACHE_TTL = 60 * 60;
 
 export type CatalogProduct = {
@@ -24,6 +25,10 @@ export type CatalogProduct = {
     productName: string;
     price: number;
     images: string[];
+    // SKU в системе Ozon: по нему Ozon Доставка находит товар
+    sku: number | null;
+    // Сколько штук можно купить: остаток на складах за вычетом резерва
+    stock: number;
 };
 
 export type CatalogPage = {
@@ -49,9 +54,19 @@ const toStringList = (value: unknown): string[] => {
     return typeof value === "string" && value ? [value] : [];
 };
 
+const toStock = (raw: any) =>
+    ((raw?.stocks?.stocks ?? []) as { present?: number; reserved?: number }[])
+        .map((stock) =>
+            Math.max(0, (stock.present ?? 0) - (stock.reserved ?? 0)),
+        )
+        .reduce((sum, available) => sum + available, 0);
+
 const toProduct = (raw: any): CatalogProduct | null => {
     const price = Math.round(Number(raw?.price));
-    if (!raw?.id || !raw?.name || raw.is_archived || !(price > 0)) return null;
+    const stock = toStock(raw);
+    if (!raw?.id || !raw?.name || raw.is_archived || !(price > 0) || !stock) {
+        return null;
+    }
 
     return {
         id: String(raw.id),
@@ -64,6 +79,8 @@ const toProduct = (raw: any): CatalogProduct | null => {
                 ...toStringList(raw.images),
             ]),
         ],
+        sku: Number(raw.sku) || null,
+        stock,
     };
 };
 
@@ -146,9 +163,11 @@ export class CatalogService {
         return products;
     }
 
-    private async loadAll(): Promise<CatalogProduct[]> {
-        const cached = await this.redis.get(LIST_CACHE_KEY);
-        if (cached) return JSON.parse(cached);
+    private async loadAll(fresh = false): Promise<CatalogProduct[]> {
+        if (!fresh) {
+            const cached = await this.redis.get(LIST_CACHE_KEY);
+            if (cached) return JSON.parse(cached);
+        }
 
         const products = await this.fetchProducts();
         await this.redis.setWithExpiry(
@@ -159,8 +178,10 @@ export class CatalogService {
         return products;
     }
 
-    // Параллельные запросы делят один обход Seller API
-    private getAll() {
+    // Параллельные запросы делят один обход Seller API. fresh пропускает кэш:
+    // он нужен при оформлении заказа, чтобы не продать то, чего уже нет.
+    private getAll(fresh = false) {
+        if (fresh) return this.loadAll(true);
         this.loading ??= this.loadAll().finally(() => {
             this.loading = null;
         });
@@ -198,9 +219,9 @@ export class CatalogService {
         };
     }
 
-    async findByIds(ids: string[]) {
+    async findByIds(ids: string[], options: { fresh?: boolean } = {}) {
         const wanted = new Set(ids);
-        const all = await this.getAll();
+        const all = await this.getAll(options.fresh);
         return all.filter((product) => wanted.has(product.id));
     }
 

@@ -90,6 +90,28 @@ describe("OzonService", () => {
         expect(body.deliverySettings).toEqual({ isEnabled: true });
     });
 
+    it("identifies items by sku when known, otherwise by shop id", async () => {
+        const { post, service } = build({
+            order: { id: "ozon-1", payLink: "https://pay.ozon.ru/x" },
+        });
+
+        await service.createOrder({
+            id: 7,
+            extId: "ext-7",
+            total: 1680,
+            items: [
+                { ...items[0], sku: 5417823177 },
+                { ...items[0], productId: "bag-2", sku: null },
+            ],
+        });
+
+        const [, body] = post.mock.calls[0];
+        expect(body.items[0]).toMatchObject({ sku: 5417823177 });
+        expect(body.items[0]).not.toHaveProperty("extId");
+        expect(body.items[1]).toMatchObject({ extId: "bag-2" });
+        expect(body.items[1]).not.toHaveProperty("sku");
+    });
+
     it("passes vat from env to every item", async () => {
         process.env.OZON_PAY_VAT = "VAT_20";
         const { post, service } = build({

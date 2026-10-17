@@ -214,7 +214,7 @@ export default function ProductPage() {
                                             )
                                         }
                                         min={1}
-                                        max={99}
+                                        max={Math.min(99, product.stock)}
                                         w={90}
                                         size="md"
                                     />

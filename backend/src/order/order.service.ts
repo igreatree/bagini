@@ -26,7 +26,10 @@ export class OrderService {
     ) {}
 
     // Цены берём из каталога Ozon на сервере, клиентским ценам доверять нельзя
-    async calculate(dtoItems: OrderItemDto[]) {
+    async calculate(
+        dtoItems: OrderItemDto[],
+        options: { fresh?: boolean } = {},
+    ) {
         const quantities = new Map<string, number>();
         for (const { productId, quantity } of dtoItems) {
             quantities.set(
@@ -36,7 +39,7 @@ export class OrderService {
         }
 
         const products = new Map(
-            (await this.catalog.findByIds([...quantities.keys()])).map(
+            (await this.catalog.findByIds([...quantities.keys()], options)).map(
                 (product) => [product.id, product],
             ),
         );
@@ -46,6 +49,11 @@ export class OrderService {
             if (!product) {
                 throw new BadRequestException(
                     `Товар ${productId} больше не доступен`,
+                );
+            }
+            if (quantity > product.stock) {
+                throw new BadRequestException(
+                    `«${product.productName}»: в наличии только ${product.stock} шт.`,
                 );
             }
             return {
@@ -61,12 +69,20 @@ export class OrderService {
             0,
         );
 
+        // SKU нужен Ozon Доставке, в заказе не хранится
+        const skus = new Map(
+            [...products.values()].map((product) => [product.id, product.sku]),
+        );
+
         // Доставку и её стоимость покупатель выбирает на странице оплаты Ozon
-        return { items, itemsTotal, total: itemsTotal };
+        return { items, itemsTotal, total: itemsTotal, skus };
     }
 
     async create(userId: number, dto: CreateOrderDto) {
-        const { items, itemsTotal, total } = await this.calculate(dto.items);
+        const { items, itemsTotal, total, skus } = await this.calculate(
+            dto.items,
+            { fresh: true },
+        );
 
         const order = await this.prisma.order.create({
             data: {
@@ -90,7 +106,10 @@ export class OrderService {
                 id: order.id,
                 extId: order.extId,
                 total: order.total,
-                items: order.items,
+                items: order.items.map((item) => ({
+                    ...item,
+                    sku: skus.get(item.productId) ?? null,
+                })),
                 receiptEmail: user?.email,
             });
             return await this.prisma.order.update({

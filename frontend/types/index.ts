@@ -31,6 +31,8 @@ export interface IProduct {
     price: number;
     images: string[];
     description?: string;
+    // Сколько штук есть в наличии
+    stock: number;
 }
 
 export type IProductCard = Pick<

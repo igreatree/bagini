@@ -77,7 +77,25 @@ export default function BasketPage() {
                 unavailable.forEach((id) => updateBasket(id));
                 notifications.show({
                     message:
-                        "Некоторые товары больше недоступны и удалены из корзины",
+                        "Некоторые товары закончились и удалены из корзины",
+                    color: "gray",
+                });
+            }
+
+            // В корзине не может быть больше, чем есть в наличии
+            const reduced = res.items.filter((product) => {
+                const count = useUserStore
+                    .getState()
+                    .basket.find((item) => item.id === product.id)?.count;
+                return count !== undefined && count > product.stock;
+            });
+            reduced.forEach((product) =>
+                basketQuantityChange(product.id, product.stock),
+            );
+            if (reduced.length > 0) {
+                notifications.show({
+                    message:
+                        "Количество некоторых товаров уменьшено до остатка на складе",
                     color: "gray",
                 });
             }
@@ -269,7 +287,7 @@ export default function BasketPage() {
                                             )
                                         }
                                         min={1}
-                                        max={99}
+                                        max={Math.min(99, product.stock)}
                                         w={60}
                                         size="xs"
                                     />

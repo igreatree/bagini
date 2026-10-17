@@ -12,6 +12,14 @@ const raw = (id: number, name: string, price: string, extra = {}) => ({
     price,
     primary_image: [`https://cdn.ozone.ru/${id}-main.jpg`],
     images: [`https://cdn.ozone.ru/${id}-1.jpg`],
+    sku: id * 10,
+    stocks: {
+        has_stock: true,
+        stocks: [
+            { present: 3, reserved: 1, source: "fbs" },
+            { present: 2, reserved: 0, source: "fbo" },
+        ],
+    },
     is_archived: false,
     ...extra,
 });
@@ -64,6 +72,12 @@ describe("CatalogService", () => {
         raw(3, "Лак для волос", "2000.50"),
         raw(4, "Архивный товар", "100", { is_archived: true }),
         raw(5, "Товар без цены", "0"),
+        raw(6, "Весь остаток в резерве", "100", {
+            stocks: { has_stock: true, stocks: [{ present: 2, reserved: 2 }] },
+        }),
+        raw(7, "Товар без остатков", "100", {
+            stocks: { has_stock: false, stocks: [] },
+        }),
     ];
 
     it("sends seller credentials and maps visible products", async () => {
@@ -73,17 +87,19 @@ describe("CatalogService", () => {
 
         const [url, body, config] = post.mock.calls[0] as any;
         expect(url).toBe("https://api-seller.ozon.ru/v3/product/list");
-        expect(body.filter).toEqual({ visibility: "VISIBLE" });
+        expect(body.filter).toEqual({ visibility: "IN_SALE" });
         expect(config.headers).toEqual({
             "Api-Key": "key",
             "Client-Id": "client",
         });
-        // архивный и бесплатный товары отфильтрованы, цена округлена до рублей
+        // архивный, бесплатный и без остатков отфильтрованы, цена округлена до рублей
         expect(result.items.map((p) => [p.id, p.price])).toEqual([
             ["1", 1980],
             ["2", 1500],
             ["3", 2001],
         ]);
+        // остаток: (3 - 1 резерв) + 2
+        expect(result.items[0]).toMatchObject({ sku: 10, stock: 4 });
         expect(result.items[0].images).toEqual([
             "https://cdn.ozone.ru/1-main.jpg",
             "https://cdn.ozone.ru/1-1.jpg",
@@ -133,6 +149,18 @@ describe("CatalogService", () => {
 
         expect(post.mock.calls.length).toBe(callsAfterFirst);
         expect(redis.setWithExpiry).toHaveBeenCalledTimes(1);
+    });
+
+    it("skips the cache when fresh data is requested", async () => {
+        const { service, post } = build(products);
+
+        await service.findByIds(["1"]);
+        const callsAfterFirst = post.mock.calls.length;
+        await service.findByIds(["1"]);
+        expect(post.mock.calls.length).toBe(callsAfterFirst);
+
+        await service.findByIds(["1"], { fresh: true });
+        expect(post.mock.calls.length).toBeGreaterThan(callsAfterFirst);
     });
 
     it("finds products by ids and skips unknown ones", async () => {

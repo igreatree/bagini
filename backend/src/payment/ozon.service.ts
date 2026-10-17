@@ -80,12 +80,15 @@ export class OzonService {
             productName: string;
             price: number;
             quantity: number;
+            sku?: number | null;
         }[],
     ) {
         // НДС передаётся, только если задан в окружении (VAT_0, VAT_20 и т.д.)
         const vat = process.env.OZON_PAY_VAT || undefined;
+        // Для доставки Ozon нужен extId или sku: SKU надёжнее, по нему Ozon
+        // находит товар и его остатки; без SKU передаём id товара магазина
         return items.map((item) => ({
-            extId: item.productId,
+            ...(item.sku ? { sku: item.sku } : { extId: item.productId }),
             name: item.productName,
             price: {
                 currencyCode: CURRENCY_RUB,
@@ -106,6 +109,7 @@ export class OzonService {
             productName: string;
             price: number;
             quantity: number;
+            sku?: number | null;
         }[];
         receiptEmail?: string | null;
     }): Promise<{ ozonOrderId: string; paymentUrl: string }> {
