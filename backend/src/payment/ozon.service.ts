@@ -16,6 +16,9 @@ import {
 const DEFAULT_API_URL = "https://payapi.ozon.ru";
 const CURRENCY_RUB = "643";
 const PAYMENT_ALGORITHM = "PAY_ALGO_SMS";
+// Одинарная фискализация: один чек при оплате. Для товаров с needMark = true
+// в запросе нужна маркировка, в каталоге таких товаров сейчас нет.
+const FISCALIZATION_TYPE = "FISCAL_TYPE_SINGLE";
 const ITEM_TYPE_PRODUCT = "TYPE_PRODUCT";
 
 // amount.value передаётся в копейках (1980 ₽ → "198000")
@@ -123,6 +126,7 @@ export class OzonService {
         const data = await this.post("/v1/createOrder", {
             accessKey,
             extId: order.extId,
+            fiscalizationType: FISCALIZATION_TYPE,
             paymentAlgorithm: PAYMENT_ALGORITHM,
             mode: "MODE_FULL",
             amount,
@@ -134,6 +138,7 @@ export class OzonService {
             requestSign: signCreateOrder({
                 accessKey,
                 extId: order.extId,
+                fiscalizationType: FISCALIZATION_TYPE,
                 paymentAlgorithm: PAYMENT_ALGORITHM,
                 currencyCode: amount.currencyCode,
                 amount: amount.value,

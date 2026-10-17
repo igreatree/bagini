@@ -49,6 +49,7 @@ describe("OzonService", () => {
             accessKey: "access",
             extId: "ext-7",
             mode: "MODE_FULL",
+            fiscalizationType: "FISCAL_TYPE_SINGLE",
             amount: { currencyCode: "643", value: "168000" },
             successUrl: "https://shop.test/order/7",
             failUrl: "https://shop.test/order/7",
@@ -57,6 +58,7 @@ describe("OzonService", () => {
             signCreateOrder({
                 accessKey: "access",
                 extId: "ext-7",
+                fiscalizationType: "FISCAL_TYPE_SINGLE",
                 paymentAlgorithm: "PAY_ALGO_SMS",
                 currencyCode: "643",
                 amount: "168000",
