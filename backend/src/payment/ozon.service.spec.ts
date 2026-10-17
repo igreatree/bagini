@@ -23,6 +23,10 @@ describe("OzonService", () => {
         return { post, service: new OzonService({ post } as any) };
     };
 
+    const items = [
+        { productId: "bag-1", productName: "Сумка", price: 840, quantity: 2 },
+    ];
+
     it("sends signed createOrder request and returns payment url", async () => {
         const { post, service } = build({
             order: { id: "ozon-1", payLink: "https://pay.ozon.ru/x" },
@@ -32,6 +36,8 @@ describe("OzonService", () => {
             id: 7,
             extId: "ext-7",
             total: 1980,
+            deliveryPrice: 300,
+            items,
         });
 
         expect(result).toEqual({
@@ -43,6 +49,7 @@ describe("OzonService", () => {
         expect(body).toMatchObject({
             accessKey: "access",
             extId: "ext-7",
+            mode: "MODE_FULL",
             amount: { currencyCode: "643", value: "198000" },
             successUrl: "https://shop.test/order/7",
             failUrl: "https://shop.test/order/7",
@@ -59,10 +66,67 @@ describe("OzonService", () => {
         );
     });
 
+    it("sends products and paid delivery as order items", async () => {
+        const { post, service } = build({
+            order: { id: "ozon-1", payLink: "https://pay.ozon.ru/x" },
+        });
+
+        await service.createOrder({
+            id: 7,
+            extId: "ext-7",
+            total: 1980,
+            deliveryPrice: 300,
+            items,
+        });
+
+        const [, body] = post.mock.calls[0];
+        expect(body.items).toEqual([
+            {
+                extId: "bag-1",
+                name: "Сумка",
+                price: { currencyCode: "643", value: "84000" },
+                quantity: 2,
+                type: "TYPE_PRODUCT",
+            },
+            {
+                extId: "delivery",
+                name: "Доставка",
+                price: { currencyCode: "643", value: "30000" },
+                quantity: 1,
+                type: "TYPE_SERVICE",
+            },
+        ]);
+    });
+
+    it("omits delivery item when delivery is free and passes vat from env", async () => {
+        process.env.OZON_PAY_VAT = "VAT_20";
+        const { post, service } = build({
+            order: { id: "ozon-1", payLink: "https://pay.ozon.ru/x" },
+        });
+
+        await service.createOrder({
+            id: 7,
+            extId: "ext-7",
+            total: 1680,
+            deliveryPrice: 0,
+            items,
+        });
+
+        const [, body] = post.mock.calls[0];
+        expect(body.items).toHaveLength(1);
+        expect(body.items[0].vat).toBe("VAT_20");
+    });
+
     it("fails when response has no payment url", async () => {
         const { service } = build({ order: { id: "ozon-1" } });
         await expect(
-            service.createOrder({ id: 1, extId: "e", total: 100 }),
+            service.createOrder({
+                id: 1,
+                extId: "e",
+                total: 100,
+                deliveryPrice: 0,
+                items,
+            }),
         ).rejects.toBeInstanceOf(BadGatewayException);
     });
 });

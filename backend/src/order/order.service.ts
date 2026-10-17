@@ -94,6 +94,8 @@ export class OrderService {
                 id: order.id,
                 extId: order.extId,
                 total: order.total,
+                deliveryPrice: order.deliveryPrice,
+                items: order.items,
                 receiptEmail: user?.email,
             });
             return await this.prisma.order.update({
