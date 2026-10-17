@@ -134,10 +134,9 @@ export default function OrdersPage() {
 
                         <Group justify="space-between">
                             <Text size="sm" c="dimmed">
-                                Доставка:{" "}
                                 {order.deliveryPrice > 0
-                                    ? `${formatPrice(order.deliveryPrice)} ₽`
-                                    : "бесплатно"}
+                                    ? `Доставка: ${formatPrice(order.deliveryPrice)} ₽`
+                                    : ""}
                             </Text>
                             <Text fw={700}>{formatPrice(order.total)} ₽</Text>
                         </Group>

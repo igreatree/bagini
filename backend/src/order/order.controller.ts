@@ -17,10 +17,11 @@ export class OrderController {
     constructor(private readonly orderService: OrderService) {}
 
     @Post("calculate")
-    calculate(@Body() dto: CalculateOrderDto) {
-        const { itemsTotal, deliveryPrice, freeDeliveryFrom, total } =
-            this.orderService.calculate(dto.items);
-        return { itemsTotal, deliveryPrice, freeDeliveryFrom, total };
+    async calculate(@Body() dto: CalculateOrderDto) {
+        const { itemsTotal, total } = await this.orderService.calculate(
+            dto.items,
+        );
+        return { itemsTotal, total };
     }
 
     @UseGuards(JwtCookieAuthGuard)

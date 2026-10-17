@@ -3,8 +3,8 @@
 import { formatPrice } from "@/helpers";
 import { useUserStore } from "@/store/user";
 import { IProductCard } from "@/types";
-import { Card, Badge, Button, Text, Stack } from "@mantine/core";
-import { IconBasket, IconCheck } from "@tabler/icons-react";
+import { Card, Badge, Button, Text, Stack, Center } from "@mantine/core";
+import { IconBasket, IconCheck, IconPhoto } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
@@ -13,7 +13,6 @@ export const ProductCard = ({
     id,
     price,
     images,
-    type,
 }: IProductCard) => {
     const { basket, updateBasket } = useUserStore();
     const inBasket = basket.find((item) => item.id === id);
@@ -37,19 +36,26 @@ export const ProductCard = ({
                 >
                     Новинка
                 </Badge>
-                <Image
-                    src={`/mock/images/${images[0]}`}
-                    fill
-                    alt="product"
-                    style={{
-                        objectFit: "contain",
-                    }}
-                />
+                {images[0] ? (
+                    <Image
+                        src={images[0]}
+                        fill
+                        sizes="(max-width: 768px) 50vw, 230px"
+                        alt={productName}
+                        style={{
+                            objectFit: "contain",
+                        }}
+                    />
+                ) : (
+                    <Center h="100%">
+                        <IconPhoto
+                            size={48}
+                            color="var(--mantine-color-gray-4)"
+                        />
+                    </Center>
+                )}
             </Card.Section>
             <Stack p="sm" gap="xs">
-                <Badge size="xs" variant="light">
-                    {type}
-                </Badge>
                 <Text fw={500} lineClamp={2} title={productName}>
                     {productName}
                 </Text>

@@ -17,8 +17,6 @@ const DEFAULT_API_URL = "https://payapi.ozon.ru";
 const CURRENCY_RUB = "643";
 const PAYMENT_ALGORITHM = "PAY_ALGO_SMS";
 const ITEM_TYPE_PRODUCT = "TYPE_PRODUCT";
-const ITEM_TYPE_SERVICE = "TYPE_SERVICE";
-const DELIVERY_ITEM_ID = "delivery";
 
 // amount.value передаётся в копейках (1980 ₽ → "198000")
 const toOzonAmount = (rubles: number) => String(rubles * 100);
@@ -74,65 +72,35 @@ export class OzonService {
         }
     }
 
-    // Позиции заказа для режима MODE_FULL: товары и, если она платная, доставка
-    // отдельной услугой. Сумма позиций должна совпадать с amount.
-    private buildItems(order: {
-        deliveryPrice: number;
+    // Позиции заказа для режима MODE_FULL. Доставку сюда не добавляем: её
+    // стоимость и адрес покупатель выбирает на странице оплаты (deliverySettings).
+    private buildItems(
         items: {
             productId: string;
             productName: string;
             price: number;
             quantity: number;
-        }[];
-    }) {
+        }[],
+    ) {
         // НДС передаётся, только если задан в окружении (VAT_0, VAT_20 и т.д.)
         const vat = process.env.OZON_PAY_VAT || undefined;
-        const toItem = (item: {
-            extId: string;
-            name: string;
-            price: number;
-            quantity: number;
-            type: string;
-        }) => ({
-            extId: item.extId,
-            name: item.name,
+        return items.map((item) => ({
+            extId: item.productId,
+            name: item.productName,
             price: {
                 currencyCode: CURRENCY_RUB,
                 value: toOzonAmount(item.price),
             },
             quantity: item.quantity,
-            type: item.type,
+            type: ITEM_TYPE_PRODUCT,
             vat,
-        });
-
-        const items = order.items.map((item) =>
-            toItem({
-                extId: item.productId,
-                name: item.productName,
-                price: item.price,
-                quantity: item.quantity,
-                type: ITEM_TYPE_PRODUCT,
-            }),
-        );
-        if (order.deliveryPrice > 0) {
-            items.push(
-                toItem({
-                    extId: DELIVERY_ITEM_ID,
-                    name: "Доставка",
-                    price: order.deliveryPrice,
-                    quantity: 1,
-                    type: ITEM_TYPE_SERVICE,
-                }),
-            );
-        }
-        return items;
+        }));
     }
 
     async createOrder(order: {
         id: number;
         extId: string;
         total: number;
-        deliveryPrice: number;
         items: {
             productId: string;
             productName: string;
@@ -154,7 +122,8 @@ export class OzonService {
             paymentAlgorithm: PAYMENT_ALGORITHM,
             mode: "MODE_FULL",
             amount,
-            items: this.buildItems(order),
+            items: this.buildItems(order.items),
+            deliverySettings: { isEnabled: true },
             successUrl: `${frontendUrl}/order/${order.id}`,
             failUrl: `${frontendUrl}/order/${order.id}`,
             receiptEmail: order.receiptEmail || undefined,

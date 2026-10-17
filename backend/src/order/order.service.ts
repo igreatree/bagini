@@ -7,8 +7,7 @@ import { PrismaService } from "../prisma.service";
 import { OzonService } from "../payment/ozon.service";
 import type { OrderStatus } from "../../generated/prisma/enums";
 import { CreateOrderDto, OrderItemDto } from "./dto/create-order.dto";
-import { CATALOG } from "./catalog";
-import { calculateDelivery } from "./delivery";
+import { CatalogService } from "../catalog/catalog.service";
 
 // Статусы заказа на стороне Ozon, которые меняют статус заказа в магазине.
 // Остальные (например, STATUS_PAYMENT_PENDING) оставляют заказ как есть.
@@ -23,9 +22,11 @@ export class OrderService {
     constructor(
         private prisma: PrismaService,
         private ozon: OzonService,
+        private catalog: CatalogService,
     ) {}
 
-    calculate(dtoItems: OrderItemDto[]) {
+    // Цены берём из каталога Ozon на сервере, клиентским ценам доверять нельзя
+    async calculate(dtoItems: OrderItemDto[]) {
         const quantities = new Map<string, number>();
         for (const { productId, quantity } of dtoItems) {
             quantities.set(
@@ -34,10 +35,18 @@ export class OrderService {
             );
         }
 
+        const products = new Map(
+            (await this.catalog.findByIds([...quantities.keys()])).map(
+                (product) => [product.id, product],
+            ),
+        );
+
         const items = [...quantities].map(([productId, quantity]) => {
-            const product = CATALOG[productId];
+            const product = products.get(productId);
             if (!product) {
-                throw new BadRequestException(`Товар ${productId} не найден`);
+                throw new BadRequestException(
+                    `Товар ${productId} больше не доступен`,
+                );
             }
             return {
                 productId,
@@ -51,33 +60,20 @@ export class OrderService {
             (sum, item) => sum + item.price * item.quantity,
             0,
         );
-        const { deliveryPrice, freeDeliveryFrom } =
-            calculateDelivery(itemsTotal);
 
-        return {
-            items,
-            itemsTotal,
-            deliveryPrice,
-            freeDeliveryFrom,
-            total: itemsTotal + deliveryPrice,
-        };
+        // Доставку и её стоимость покупатель выбирает на странице оплаты Ozon
+        return { items, itemsTotal, total: itemsTotal };
     }
 
     async create(userId: number, dto: CreateOrderDto) {
-        const { items, itemsTotal, deliveryPrice, total } = this.calculate(
-            dto.items,
-        );
+        const { items, itemsTotal, total } = await this.calculate(dto.items);
 
         const order = await this.prisma.order.create({
             data: {
                 userId,
                 itemsTotal,
-                deliveryPrice,
+                deliveryPrice: 0,
                 total,
-                recipientName: dto.recipientName,
-                city: dto.city,
-                address: dto.address,
-                postalCode: dto.postalCode,
                 comment: dto.comment,
                 items: { create: items },
             },
@@ -94,7 +90,6 @@ export class OrderService {
                 id: order.id,
                 extId: order.extId,
                 total: order.total,
-                deliveryPrice: order.deliveryPrice,
                 items: order.items,
                 receiptEmail: user?.email,
             });

@@ -7,6 +7,7 @@ import { AuthModule } from "./auth/auth.module";
 import { RedisModule } from "./redis/redis.module";
 import { HttpModule } from "@nestjs/axios";
 import { OrderModule } from "./order/order.module";
+import { CatalogModule } from "./catalog/catalog.module";
 
 @Module({
     imports: [
@@ -16,6 +17,7 @@ import { OrderModule } from "./order/order.module";
         UserModule,
         AuthModule,
         OrderModule,
+        CatalogModule,
     ],
     controllers: [AppController],
     providers: [AppService],

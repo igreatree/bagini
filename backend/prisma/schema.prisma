@@ -54,9 +54,10 @@ model Order {
     deliveryPrice    Int
     total            Int
 
-    recipientName    String
-    city             String
-    address          String
+    // Адрес и получателя выбирает покупатель на странице оплаты Ozon
+    recipientName    String?
+    city             String?
+    address          String?
     postalCode       String?
     comment          String?
 

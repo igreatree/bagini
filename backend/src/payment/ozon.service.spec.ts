@@ -35,8 +35,7 @@ describe("OzonService", () => {
         const result = await service.createOrder({
             id: 7,
             extId: "ext-7",
-            total: 1980,
-            deliveryPrice: 300,
+            total: 1680,
             items,
         });
 
@@ -50,7 +49,7 @@ describe("OzonService", () => {
             accessKey: "access",
             extId: "ext-7",
             mode: "MODE_FULL",
-            amount: { currencyCode: "643", value: "198000" },
+            amount: { currencyCode: "643", value: "168000" },
             successUrl: "https://shop.test/order/7",
             failUrl: "https://shop.test/order/7",
         });
@@ -60,13 +59,13 @@ describe("OzonService", () => {
                 extId: "ext-7",
                 paymentAlgorithm: "PAY_ALGO_SMS",
                 currencyCode: "643",
-                amount: "198000",
+                amount: "168000",
                 secretKey: "secret",
             }),
         );
     });
 
-    it("sends products and paid delivery as order items", async () => {
+    it("sends products as order items and enables delivery selection", async () => {
         const { post, service } = build({
             order: { id: "ozon-1", payLink: "https://pay.ozon.ru/x" },
         });
@@ -74,8 +73,7 @@ describe("OzonService", () => {
         await service.createOrder({
             id: 7,
             extId: "ext-7",
-            total: 1980,
-            deliveryPrice: 300,
+            total: 1680,
             items,
         });
 
@@ -88,17 +86,11 @@ describe("OzonService", () => {
                 quantity: 2,
                 type: "TYPE_PRODUCT",
             },
-            {
-                extId: "delivery",
-                name: "Доставка",
-                price: { currencyCode: "643", value: "30000" },
-                quantity: 1,
-                type: "TYPE_SERVICE",
-            },
         ]);
+        expect(body.deliverySettings).toEqual({ isEnabled: true });
     });
 
-    it("omits delivery item when delivery is free and passes vat from env", async () => {
+    it("passes vat from env to every item", async () => {
         process.env.OZON_PAY_VAT = "VAT_20";
         const { post, service } = build({
             order: { id: "ozon-1", payLink: "https://pay.ozon.ru/x" },
@@ -108,12 +100,10 @@ describe("OzonService", () => {
             id: 7,
             extId: "ext-7",
             total: 1680,
-            deliveryPrice: 0,
             items,
         });
 
         const [, body] = post.mock.calls[0];
-        expect(body.items).toHaveLength(1);
         expect(body.items[0].vat).toBe("VAT_20");
     });
 
@@ -124,7 +114,6 @@ describe("OzonService", () => {
                 id: 1,
                 extId: "e",
                 total: 100,
-                deliveryPrice: 0,
                 items,
             }),
         ).rejects.toBeInstanceOf(BadGatewayException);

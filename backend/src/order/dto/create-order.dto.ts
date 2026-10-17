@@ -32,23 +32,6 @@ export class CalculateOrderDto {
 }
 
 export class CreateOrderDto extends CalculateOrderDto {
-    @IsString()
-    @Length(2, 100)
-    recipientName!: string;
-
-    @IsString()
-    @Length(2, 100)
-    city!: string;
-
-    @IsString()
-    @Length(5, 255)
-    address!: string;
-
-    @IsOptional()
-    @IsString()
-    @Length(6, 6)
-    postalCode?: string;
-
     @IsOptional()
     @IsString()
     @Length(0, 500)

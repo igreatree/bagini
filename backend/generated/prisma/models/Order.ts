@@ -278,9 +278,9 @@ export type OrderGroupByOutputType = {
   itemsTotal: number
   deliveryPrice: number
   total: number
-  recipientName: string
-  city: string
-  address: string
+  recipientName: string | null
+  city: string | null
+  address: string | null
   postalCode: string | null
   comment: string | null
   createdAt: Date
@@ -321,9 +321,9 @@ export type OrderWhereInput = {
   itemsTotal?: Prisma.IntFilter<"Order"> | number
   deliveryPrice?: Prisma.IntFilter<"Order"> | number
   total?: Prisma.IntFilter<"Order"> | number
-  recipientName?: Prisma.StringFilter<"Order"> | string
-  city?: Prisma.StringFilter<"Order"> | string
-  address?: Prisma.StringFilter<"Order"> | string
+  recipientName?: Prisma.StringNullableFilter<"Order"> | string | null
+  city?: Prisma.StringNullableFilter<"Order"> | string | null
+  address?: Prisma.StringNullableFilter<"Order"> | string | null
   postalCode?: Prisma.StringNullableFilter<"Order"> | string | null
   comment?: Prisma.StringNullableFilter<"Order"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
@@ -343,9 +343,9 @@ export type OrderOrderByWithRelationInput = {
   itemsTotal?: Prisma.SortOrder
   deliveryPrice?: Prisma.SortOrder
   total?: Prisma.SortOrder
-  recipientName?: Prisma.SortOrder
-  city?: Prisma.SortOrder
-  address?: Prisma.SortOrder
+  recipientName?: Prisma.SortOrderInput | Prisma.SortOrder
+  city?: Prisma.SortOrderInput | Prisma.SortOrder
+  address?: Prisma.SortOrderInput | Prisma.SortOrder
   postalCode?: Prisma.SortOrderInput | Prisma.SortOrder
   comment?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -368,9 +368,9 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   itemsTotal?: Prisma.IntFilter<"Order"> | number
   deliveryPrice?: Prisma.IntFilter<"Order"> | number
   total?: Prisma.IntFilter<"Order"> | number
-  recipientName?: Prisma.StringFilter<"Order"> | string
-  city?: Prisma.StringFilter<"Order"> | string
-  address?: Prisma.StringFilter<"Order"> | string
+  recipientName?: Prisma.StringNullableFilter<"Order"> | string | null
+  city?: Prisma.StringNullableFilter<"Order"> | string | null
+  address?: Prisma.StringNullableFilter<"Order"> | string | null
   postalCode?: Prisma.StringNullableFilter<"Order"> | string | null
   comment?: Prisma.StringNullableFilter<"Order"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
@@ -390,9 +390,9 @@ export type OrderOrderByWithAggregationInput = {
   itemsTotal?: Prisma.SortOrder
   deliveryPrice?: Prisma.SortOrder
   total?: Prisma.SortOrder
-  recipientName?: Prisma.SortOrder
-  city?: Prisma.SortOrder
-  address?: Prisma.SortOrder
+  recipientName?: Prisma.SortOrderInput | Prisma.SortOrder
+  city?: Prisma.SortOrderInput | Prisma.SortOrder
+  address?: Prisma.SortOrderInput | Prisma.SortOrder
   postalCode?: Prisma.SortOrderInput | Prisma.SortOrder
   comment?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -418,9 +418,9 @@ export type OrderScalarWhereWithAggregatesInput = {
   itemsTotal?: Prisma.IntWithAggregatesFilter<"Order"> | number
   deliveryPrice?: Prisma.IntWithAggregatesFilter<"Order"> | number
   total?: Prisma.IntWithAggregatesFilter<"Order"> | number
-  recipientName?: Prisma.StringWithAggregatesFilter<"Order"> | string
-  city?: Prisma.StringWithAggregatesFilter<"Order"> | string
-  address?: Prisma.StringWithAggregatesFilter<"Order"> | string
+  recipientName?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
+  city?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
+  address?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   postalCode?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   comment?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Order"> | Date | string
@@ -436,9 +436,9 @@ export type OrderCreateInput = {
   itemsTotal: number
   deliveryPrice: number
   total: number
-  recipientName: string
-  city: string
-  address: string
+  recipientName?: string | null
+  city?: string | null
+  address?: string | null
   postalCode?: string | null
   comment?: string | null
   createdAt?: Date | string
@@ -458,9 +458,9 @@ export type OrderUncheckedCreateInput = {
   itemsTotal: number
   deliveryPrice: number
   total: number
-  recipientName: string
-  city: string
-  address: string
+  recipientName?: string | null
+  city?: string | null
+  address?: string | null
   postalCode?: string | null
   comment?: string | null
   createdAt?: Date | string
@@ -477,9 +477,9 @@ export type OrderUpdateInput = {
   itemsTotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryPrice?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
-  recipientName?: Prisma.StringFieldUpdateOperationsInput | string
-  city?: Prisma.StringFieldUpdateOperationsInput | string
-  address?: Prisma.StringFieldUpdateOperationsInput | string
+  recipientName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -499,9 +499,9 @@ export type OrderUncheckedUpdateInput = {
   itemsTotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryPrice?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
-  recipientName?: Prisma.StringFieldUpdateOperationsInput | string
-  city?: Prisma.StringFieldUpdateOperationsInput | string
-  address?: Prisma.StringFieldUpdateOperationsInput | string
+  recipientName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -520,9 +520,9 @@ export type OrderCreateManyInput = {
   itemsTotal: number
   deliveryPrice: number
   total: number
-  recipientName: string
-  city: string
-  address: string
+  recipientName?: string | null
+  city?: string | null
+  address?: string | null
   postalCode?: string | null
   comment?: string | null
   createdAt?: Date | string
@@ -538,9 +538,9 @@ export type OrderUpdateManyMutationInput = {
   itemsTotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryPrice?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
-  recipientName?: Prisma.StringFieldUpdateOperationsInput | string
-  city?: Prisma.StringFieldUpdateOperationsInput | string
-  address?: Prisma.StringFieldUpdateOperationsInput | string
+  recipientName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -558,9 +558,9 @@ export type OrderUncheckedUpdateManyInput = {
   itemsTotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryPrice?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
-  recipientName?: Prisma.StringFieldUpdateOperationsInput | string
-  city?: Prisma.StringFieldUpdateOperationsInput | string
-  address?: Prisma.StringFieldUpdateOperationsInput | string
+  recipientName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -731,9 +731,9 @@ export type OrderCreateWithoutUserInput = {
   itemsTotal: number
   deliveryPrice: number
   total: number
-  recipientName: string
-  city: string
-  address: string
+  recipientName?: string | null
+  city?: string | null
+  address?: string | null
   postalCode?: string | null
   comment?: string | null
   createdAt?: Date | string
@@ -751,9 +751,9 @@ export type OrderUncheckedCreateWithoutUserInput = {
   itemsTotal: number
   deliveryPrice: number
   total: number
-  recipientName: string
-  city: string
-  address: string
+  recipientName?: string | null
+  city?: string | null
+  address?: string | null
   postalCode?: string | null
   comment?: string | null
   createdAt?: Date | string
@@ -801,9 +801,9 @@ export type OrderScalarWhereInput = {
   itemsTotal?: Prisma.IntFilter<"Order"> | number
   deliveryPrice?: Prisma.IntFilter<"Order"> | number
   total?: Prisma.IntFilter<"Order"> | number
-  recipientName?: Prisma.StringFilter<"Order"> | string
-  city?: Prisma.StringFilter<"Order"> | string
-  address?: Prisma.StringFilter<"Order"> | string
+  recipientName?: Prisma.StringNullableFilter<"Order"> | string | null
+  city?: Prisma.StringNullableFilter<"Order"> | string | null
+  address?: Prisma.StringNullableFilter<"Order"> | string | null
   postalCode?: Prisma.StringNullableFilter<"Order"> | string | null
   comment?: Prisma.StringNullableFilter<"Order"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
@@ -819,9 +819,9 @@ export type OrderCreateWithoutItemsInput = {
   itemsTotal: number
   deliveryPrice: number
   total: number
-  recipientName: string
-  city: string
-  address: string
+  recipientName?: string | null
+  city?: string | null
+  address?: string | null
   postalCode?: string | null
   comment?: string | null
   createdAt?: Date | string
@@ -840,9 +840,9 @@ export type OrderUncheckedCreateWithoutItemsInput = {
   itemsTotal: number
   deliveryPrice: number
   total: number
-  recipientName: string
-  city: string
-  address: string
+  recipientName?: string | null
+  city?: string | null
+  address?: string | null
   postalCode?: string | null
   comment?: string | null
   createdAt?: Date | string
@@ -874,9 +874,9 @@ export type OrderUpdateWithoutItemsInput = {
   itemsTotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryPrice?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
-  recipientName?: Prisma.StringFieldUpdateOperationsInput | string
-  city?: Prisma.StringFieldUpdateOperationsInput | string
-  address?: Prisma.StringFieldUpdateOperationsInput | string
+  recipientName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -895,9 +895,9 @@ export type OrderUncheckedUpdateWithoutItemsInput = {
   itemsTotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryPrice?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
-  recipientName?: Prisma.StringFieldUpdateOperationsInput | string
-  city?: Prisma.StringFieldUpdateOperationsInput | string
-  address?: Prisma.StringFieldUpdateOperationsInput | string
+  recipientName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -914,9 +914,9 @@ export type OrderCreateManyUserInput = {
   itemsTotal: number
   deliveryPrice: number
   total: number
-  recipientName: string
-  city: string
-  address: string
+  recipientName?: string | null
+  city?: string | null
+  address?: string | null
   postalCode?: string | null
   comment?: string | null
   createdAt?: Date | string
@@ -932,9 +932,9 @@ export type OrderUpdateWithoutUserInput = {
   itemsTotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryPrice?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
-  recipientName?: Prisma.StringFieldUpdateOperationsInput | string
-  city?: Prisma.StringFieldUpdateOperationsInput | string
-  address?: Prisma.StringFieldUpdateOperationsInput | string
+  recipientName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -952,9 +952,9 @@ export type OrderUncheckedUpdateWithoutUserInput = {
   itemsTotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryPrice?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
-  recipientName?: Prisma.StringFieldUpdateOperationsInput | string
-  city?: Prisma.StringFieldUpdateOperationsInput | string
-  address?: Prisma.StringFieldUpdateOperationsInput | string
+  recipientName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -972,9 +972,9 @@ export type OrderUncheckedUpdateManyWithoutUserInput = {
   itemsTotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryPrice?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
-  recipientName?: Prisma.StringFieldUpdateOperationsInput | string
-  city?: Prisma.StringFieldUpdateOperationsInput | string
-  address?: Prisma.StringFieldUpdateOperationsInput | string
+  recipientName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1127,9 +1127,9 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     itemsTotal: number
     deliveryPrice: number
     total: number
-    recipientName: string
-    city: string
-    address: string
+    recipientName: string | null
+    city: string | null
+    address: string | null
     postalCode: string | null
     comment: string | null
     createdAt: Date

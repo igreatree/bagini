@@ -26,37 +26,28 @@ export type UserType = {
 
 export interface IProduct {
     id: string;
+    offerId: string;
     productName: string;
-    description: string;
     price: number;
     images: string[];
-
-    brand: string;
-    line: string;
-    name: string;
-    type: string;
-    purpose: string;
-    volume: string;
-    hold: string;
-    hairType?: string;
-    texture?: string;
-    effect: string;
-    scent: string;
-    countryOfBrand: string;
-    form: string;
+    description?: string;
 }
 
 export type IProductCard = Pick<
     IProduct,
-    "productName" | "price" | "images" | "type" | "id"
+    "productName" | "price" | "images" | "id"
 >;
+
+export type ProductsPageType = {
+    items: IProduct[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+};
 
 export type CreateOrderType = {
     items: { productId: string; quantity: number }[];
-    recipientName: string;
-    city: string;
-    address: string;
-    postalCode?: string;
     comment?: string;
 };
 
@@ -83,7 +74,5 @@ export type OrderType = {
 
 export type OrderQuoteType = {
     itemsTotal: number;
-    deliveryPrice: number;
-    freeDeliveryFrom: number;
     total: number;
 };

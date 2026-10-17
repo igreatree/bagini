@@ -12,20 +12,19 @@ import {
     Stack,
     ActionIcon,
     NumberInput,
-    Badge,
     Center,
     Checkbox,
     Anchor,
-    TextInput,
+    Skeleton,
     Textarea,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { IconTrash, IconShoppingCartOff } from "@tabler/icons-react";
+import { IconTrash, IconShoppingCartOff, IconPhoto } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { useUserStore } from "@/store/user";
-import { calculateOrder, createOrder } from "@/api/order";
-import { IProduct, OrderQuoteType } from "@/types";
-import { useMockStore } from "@/store/mock";
+import { createOrder } from "@/api/order";
+import { getProductsByIds } from "@/api/product";
+import { IProduct } from "@/types";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -52,54 +51,48 @@ export default function BasketPage() {
         buyTermsApplied,
         setBuyTermsApplied,
     } = useUserStore();
-    const { products } = useMockStore();
+    const [products, setProducts] = useState<IProduct[] | null>(null);
     const [checkoutLoading, setCheckoutLoading] = useState(false);
-    const [quote, setQuote] = useState<OrderQuoteType | null>(null);
     const router = useRouter();
 
     const form = useForm({
-        initialValues: {
-            recipientName: [user?.name, user?.lastName]
-                .filter(Boolean)
-                .join(" "),
-            city: "",
-            address: "",
-            postalCode: "",
-            comment: "",
-        },
-        validate: {
-            recipientName: (value: string) =>
-                value.trim().length < 2 ? "Укажите получателя" : null,
-            city: (value: string) =>
-                value.trim().length < 2 ? "Укажите город" : null,
-            address: (value: string) =>
-                value.trim().length < 5
-                    ? "Укажите улицу, дом и квартиру"
-                    : null,
-            postalCode: (value: string) =>
-                value && !/^\d{6}$/.test(value)
-                    ? "Индекс состоит из 6 цифр"
-                    : null,
-        },
+        initialValues: { comment: "" },
     });
 
+    // Корзина хранит только id: актуальные название и цену берём из каталога
+    const basketIds = basket.map((item) => item.id).join(",");
+
     useEffect(() => {
-        if (basket.length === 0) return;
+        if (!basketIds) return;
         let actual = true;
-        calculateOrder(
-            basket.map(({ id, count }) => ({ productId: id, quantity: count })),
-        ).then((res) => {
-            if (actual && "deliveryPrice" in res) setQuote(res);
+        getProductsByIds(basketIds.split(",")).then((res) => {
+            if (!actual || !("items" in res)) return;
+            setProducts(res.items);
+
+            const available = new Set(res.items.map((product) => product.id));
+            const unavailable = basketIds
+                .split(",")
+                .filter((id) => !available.has(id));
+            if (unavailable.length > 0) {
+                unavailable.forEach((id) => updateBasket(id));
+                notifications.show({
+                    message:
+                        "Некоторые товары больше недоступны и удалены из корзины",
+                    color: "gray",
+                });
+            }
         });
         return () => {
             actual = false;
         };
-    }, [basket]);
+        // updateBasket из zustand-стора стабилен
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [basketIds]);
 
     const items: BasketItem[] = useMemo(() => {
-        return basket.map((item) => {
-            const product = products.find((p) => p.id === item.id)!;
-            return { product, quantity: item.count };
+        return basket.flatMap((item) => {
+            const product = products?.find((p) => p.id === item.id);
+            return product ? [{ product, quantity: item.count }] : [];
         });
     }, [basket, products]);
 
@@ -133,10 +126,6 @@ export default function BasketPage() {
                     productId: product.id,
                     quantity,
                 })),
-                recipientName: values.recipientName.trim(),
-                city: values.city.trim(),
-                address: values.address.trim(),
-                postalCode: values.postalCode || undefined,
                 comment: values.comment.trim() || undefined,
             });
             if ("order" in res && res.order.paymentUrl) {
@@ -161,6 +150,18 @@ export default function BasketPage() {
     //         </Container>
     //     );
     // }
+
+    if (basket.length > 0 && items.length === 0) {
+        return (
+            <Container size="xl" p={0}>
+                <Stack gap="md">
+                    {basket.map((item) => (
+                        <Skeleton key={item.id} height={100} radius="md" />
+                    ))}
+                </Stack>
+            </Container>
+        );
+    }
 
     if (items.length === 0) {
         return (
@@ -199,15 +200,31 @@ export default function BasketPage() {
                 {items.map(({ product, quantity }) => (
                     <Paper key={product.id} withBorder radius="md" p="md">
                         <Group align="flex-start" wrap="nowrap">
-                            <Image
-                                src={`/mock/images/${product.images[0]}`}
-                                alt={product.productName}
-                                width={139}
-                                height={180}
+                            <div
                                 style={{
-                                    objectFit: "cover",
+                                    position: "relative",
+                                    width: 139,
+                                    height: 180,
+                                    flexShrink: 0,
                                 }}
-                            />
+                            >
+                                {product.images[0] ? (
+                                    <Image
+                                        src={product.images[0]}
+                                        alt={product.productName}
+                                        fill
+                                        sizes="139px"
+                                        style={{ objectFit: "contain" }}
+                                    />
+                                ) : (
+                                    <Center h="100%">
+                                        <IconPhoto
+                                            size={40}
+                                            color="var(--mantine-color-gray-4)"
+                                        />
+                                    </Center>
+                                )}
+                            </div>
 
                             <Stack gap={4} style={{ flex: 1 }}>
                                 <Group
@@ -215,20 +232,15 @@ export default function BasketPage() {
                                     wrap="nowrap"
                                     align="flex-start"
                                 >
-                                    <Stack gap={0}>
-                                        <Link
-                                            href={`/product/${product.id}`}
-                                            style={{
-                                                fontWeight: 500,
-                                                color: "var(--mantine-color-pink-filled)",
-                                            }}
-                                        >
-                                            {product.productName}
-                                        </Link>
-                                        <Badge size="xs" variant="light" mt={4}>
-                                            {product.type}
-                                        </Badge>
-                                    </Stack>
+                                    <Link
+                                        href={`/product/${product.id}`}
+                                        style={{
+                                            fontWeight: 500,
+                                            color: "var(--mantine-color-pink-filled)",
+                                        }}
+                                    >
+                                        {product.productName}
+                                    </Link>
                                     <ActionIcon
                                         variant="subtle"
                                         color="red"
@@ -242,15 +254,6 @@ export default function BasketPage() {
                                         <IconTrash size={16} />
                                     </ActionIcon>
                                 </Group>
-
-                                <Text
-                                    mih={82}
-                                    size="sm"
-                                    c="dimmed"
-                                    lineClamp={4}
-                                >
-                                    {product.description}
-                                </Text>
 
                                 <Group
                                     justify="space-between"
@@ -283,41 +286,17 @@ export default function BasketPage() {
             <Divider my="lg" />
 
             <Paper withBorder radius="md" p="lg" mb="md">
-                <Title order={4} mb="md">
-                    Доставка
-                </Title>
-                <Stack gap="sm">
-                    <TextInput
-                        label="Получатель"
-                        placeholder="Имя и фамилия"
-                        {...form.getInputProps("recipientName")}
-                    />
-                    <Group grow align="flex-start">
-                        <TextInput
-                            label="Город"
-                            {...form.getInputProps("city")}
-                        />
-                        <TextInput
-                            label="Индекс"
-                            placeholder="Необязательно"
-                            maxLength={6}
-                            {...form.getInputProps("postalCode")}
-                        />
-                    </Group>
-                    <TextInput
-                        label="Адрес"
-                        placeholder="Улица, дом, квартира"
-                        {...form.getInputProps("address")}
-                    />
-                    <Textarea
-                        label="Комментарий"
-                        placeholder="Необязательно"
-                        autosize
-                        minRows={2}
-                        maxLength={500}
-                        {...form.getInputProps("comment")}
-                    />
-                </Stack>
+                <Textarea
+                    label="Комментарий к заказу"
+                    placeholder="Необязательно"
+                    autosize
+                    minRows={2}
+                    maxLength={500}
+                    {...form.getInputProps("comment")}
+                />
+                <Text size="xs" c="dimmed" mt="xs">
+                    Адрес и способ доставки вы выберете на странице оплаты
+                </Text>
             </Paper>
 
             <Paper withBorder radius="md" p="lg">
@@ -327,30 +306,12 @@ export default function BasketPage() {
                 </Group>
                 <Group justify="space-between" mb={4}>
                     <Text c="dimmed">Доставка</Text>
-                    <Text>
-                        {quote === null
-                            ? "—"
-                            : quote.deliveryPrice > 0
-                              ? formatPrice(quote.deliveryPrice)
-                              : "Бесплатно"}
-                    </Text>
+                    <Text>Рассчитывается при оплате</Text>
                 </Group>
-                {quote !== null &&
-                    quote.deliveryPrice > 0 &&
-                    quote.freeDeliveryFrom > quote.itemsTotal && (
-                        <Text size="xs" c="dimmed" mb="md">
-                            Бесплатная доставка от{" "}
-                            {formatPrice(quote.freeDeliveryFrom)}, осталось
-                            добавить на{" "}
-                            {formatPrice(
-                                quote.freeDeliveryFrom - quote.itemsTotal,
-                            )}
-                        </Text>
-                    )}
                 <Group justify="space-between" mb="md" mt="md">
-                    <Text size="lg">Итого</Text>
+                    <Text size="lg">Итого за товары</Text>
                     <Text size="xl" fw={700}>
-                        {formatPrice(total + (quote?.deliveryPrice ?? 0))}
+                        {formatPrice(total)}
                     </Text>
                 </Group>
                 <Checkbox
@@ -390,7 +351,6 @@ export default function BasketPage() {
                             router.push("/auth");
                             return;
                         }
-                        if (form.validate().hasErrors) return;
                         handleCheckout(form.getValues());
                     }}
                 >

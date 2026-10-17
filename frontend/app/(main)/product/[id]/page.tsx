@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatPrice } from "@/helpers";
 import { useUserStore } from "@/store/user";
 import { IProduct } from "@/types";
@@ -9,53 +9,51 @@ import {
     Grid,
     Stack,
     Group,
-    Badge,
     Text,
     Title,
     Button,
     Paper,
     Divider,
     UnstyledButton,
-    Box,
     NumberInput,
+    Skeleton,
+    Center,
 } from "@mantine/core";
-import { IconBasket, IconCheck, IconChevronLeft } from "@tabler/icons-react";
+import {
+    IconBasket,
+    IconCheck,
+    IconChevronLeft,
+    IconPhoto,
+} from "@tabler/icons-react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import { useMockStore } from "@/store/mock";
-
-const getCharacteristics = (product: IProduct) => {
-    const rows: { label: string; value?: string }[] = [
-        { label: "Бренд", value: product.brand },
-        { label: "Линия", value: product.line },
-        { label: "Название", value: product.name },
-        { label: "Тип", value: product.type },
-        { label: "Назначение", value: product.purpose },
-        { label: "Объём", value: product.volume },
-        { label: "Фиксация", value: product.hold },
-        { label: "Тип волос", value: product.hairType },
-        { label: "Текстура", value: product.texture },
-        { label: "Эффект", value: product.effect },
-        { label: "Аромат", value: product.scent },
-        { label: "Страна бренда", value: product.countryOfBrand },
-        { label: "Форма", value: product.form },
-    ];
-
-    return rows.filter((row) => Boolean(row.value));
-};
+import { getProduct } from "@/api/product";
 
 export default function ProductPage() {
-    const { user, basket, updateBasket, basketQuantityChange } = useUserStore();
-    const { products } = useMockStore();
+    const { basket, updateBasket, basketQuantityChange } = useUserStore();
     const router = useRouter();
     const [activeImage, setActiveImage] = useState(0);
+    const [loaded, setLoaded] = useState<{
+        id: string;
+        product: IProduct | null;
+    } | null>(null);
     const pathname = usePathname();
-    const productId = pathname.split("/").pop();
+    const productId = pathname.split("/").pop()!;
 
-    const product = products.find((p) => p.id === productId)!;
-
-    const inBasket = basket.find((item) => item.id === product.id);
-    const characteristics = getCharacteristics(product);
+    useEffect(() => {
+        let actual = true;
+        getProduct(productId).then((res) => {
+            if (actual) {
+                setLoaded({
+                    id: productId,
+                    product: "product" in res ? res.product : null,
+                });
+            }
+        });
+        return () => {
+            actual = false;
+        };
+    }, [productId]);
 
     const handleQuantityChange = (id: string, value: number | string) => {
         const quantity = Number(value);
@@ -63,32 +61,58 @@ export default function ProductPage() {
         basketQuantityChange(id, quantity);
     };
 
+    const backButton = (
+        <Button
+            mb="md"
+            variant="transparent"
+            leftSection={<IconChevronLeft />}
+            onClick={() => router.back()}
+            size="lg"
+        >
+            Назад
+        </Button>
+    );
+
+    if (loaded?.id !== productId) {
+        return (
+            <Container size="xl" p={0}>
+                {backButton}
+                <Grid gap="sm">
+                    <Grid.Col span={{ base: 12, sm: 5 }}>
+                        <Skeleton style={{ aspectRatio: "3/4" }} />
+                    </Grid.Col>
+                    <Grid.Col span={{ base: 12, sm: 7 }}>
+                        <Stack gap="sm">
+                            <Skeleton height={32} />
+                            <Skeleton height={120} />
+                        </Stack>
+                    </Grid.Col>
+                </Grid>
+            </Container>
+        );
+    }
+
+    const { product } = loaded;
+
+    if (!product) {
+        return (
+            <Container size="xl" p={0}>
+                {backButton}
+                <Center py={80}>
+                    <Text size="lg" fw={500}>
+                        Товар не найден или больше не доступен
+                    </Text>
+                </Center>
+            </Container>
+        );
+    }
+
+    const inBasket = basket.find((item) => item.id === product.id);
+    const image = product.images[activeImage];
+
     return (
         <Container size="xl" p={0}>
-            {/* <Breadcrumbs mb="lg">
-                <Anchor size="sm" onClick={() => router.push("/")} c="pink">
-                    Главная
-                </Anchor>
-                <Anchor
-                    size="sm"
-                    onClick={() => router.push("/")} // () => router.push(`/catalog?type=${product.type}`)
-                    c="pink"
-                >
-                    {product.type}
-                </Anchor>
-                <Text size="sm" c="dimmed">
-                    {product.productName}
-                </Text>
-            </Breadcrumbs> */}
-            <Button
-                mb="md"
-                variant="transparent"
-                leftSection={<IconChevronLeft />}
-                onClick={() => router.back()}
-                size="lg"
-            >
-                Назад
-            </Button>
+            {backButton}
 
             <Grid gap="sm">
                 <Grid.Col span={{ base: 12, sm: 5 }}>
@@ -100,12 +124,22 @@ export default function ProductPage() {
                                 aspectRatio: "3/4",
                             }}
                         >
-                            <Image
-                                src={`/mock/images/${product.images[activeImage]}`}
-                                alt={product.productName}
-                                fill
-                                style={{ objectFit: "contain" }}
-                            />
+                            {image ? (
+                                <Image
+                                    src={image}
+                                    alt={product.productName}
+                                    fill
+                                    sizes="(max-width: 768px) 100vw, 40vw"
+                                    style={{ objectFit: "contain" }}
+                                />
+                            ) : (
+                                <Center h="100%">
+                                    <IconPhoto
+                                        size={64}
+                                        color="var(--mantine-color-gray-4)"
+                                    />
+                                </Center>
+                            )}
                         </Paper>
 
                         {product.images.length > 1 && (
@@ -133,9 +167,10 @@ export default function ProductPage() {
                                             miw={80}
                                         >
                                             <Image
-                                                src={`/mock/images/${image}`}
+                                                src={image}
                                                 alt={`${product.productName} ${index + 1}`}
                                                 fill
+                                                sizes="80px"
                                                 style={{ objectFit: "contain" }}
                                             />
                                         </Paper>
@@ -153,13 +188,13 @@ export default function ProductPage() {
                     bg="#ffffff9c"
                 >
                     <Stack gap="sm">
-                        <Badge size="xs" variant="light">
-                            {product.type}
-                        </Badge>
-
                         <Title order={2}>{product.productName}</Title>
 
-                        <Text c="dimmed">{product.description}</Text>
+                        {product.description && (
+                            <Text c="dimmed" style={{ whiteSpace: "pre-line" }}>
+                                {product.description}
+                            </Text>
+                        )}
 
                         <Divider my="sm" />
 
@@ -208,35 +243,6 @@ export default function ProductPage() {
                                 {inBasket ? "В корзине" : "В корзину"}
                             </Button>
                         </Group>
-
-                        <Divider my="sm" />
-
-                        <Title order={4} mb="xs">
-                            Характеристики
-                        </Title>
-
-                        <Box>
-                            {characteristics.map((row, index) => (
-                                <Group
-                                    key={row.label}
-                                    justify="space-between"
-                                    py={8}
-                                    style={{
-                                        borderBottom:
-                                            index < characteristics.length - 1
-                                                ? "1px solid var(--mantine-color-gray-2)"
-                                                : undefined,
-                                    }}
-                                >
-                                    <Text size="sm" c="dimmed">
-                                        {row.label}
-                                    </Text>
-                                    <Text size="sm" fw={500}>
-                                        {row.value}
-                                    </Text>
-                                </Group>
-                            ))}
-                        </Box>
                     </Stack>
                 </Grid.Col>
             </Grid>
