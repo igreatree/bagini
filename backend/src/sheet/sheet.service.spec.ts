@@ -44,11 +44,11 @@ describe("SheetService", () => {
             ]),
         });
 
-        const stocks = await service.getStocks();
-        await service.getStocks();
+        const items = await service.getItems();
+        await service.getItems();
 
-        expect(stocks.get("A-1")).toBe(3);
-        expect(stocks.get("A-2")).toBe(0);
+        expect(items.get("A-1")?.stock).toBe(3);
+        expect(items.get("A-2")?.stock).toBe(0);
         expect(http.get).toHaveBeenCalledTimes(1);
         expect(http.get).toHaveBeenCalledWith(
             "https://script.google.com/macros/s/x/exec",
@@ -56,21 +56,58 @@ describe("SheetService", () => {
         );
     });
 
-    it("falls back to the last known stocks when the script is down", async () => {
+    it("reads prices from the sheet, including a free probe", async () => {
+        const { service } = build({
+            get: sheet([
+                { offerId: "A-1", stock: 3, price: 0 },
+                { offerId: "A-2", stock: 3, price: "120" },
+                { offerId: "A-3", stock: 3, price: 99.6 },
+            ]),
+        });
+
+        const items = await service.getItems();
+
+        expect(items.get("A-1")?.price).toBe(0);
+        expect(items.get("A-2")?.price).toBe(120);
+        expect(items.get("A-3")?.price).toBe(100);
+    });
+
+    it("does not turn a missing or broken price into a free probe", async () => {
+        const { service } = build({
+            get: sheet([
+                { offerId: "A-1", stock: 3 },
+                { offerId: "A-2", stock: 3, price: "" },
+                { offerId: "A-3", stock: 3, price: null },
+                { offerId: "A-4", stock: 3, price: "abc" },
+                { offerId: "A-5", stock: 3, price: -10 },
+            ]),
+        });
+
+        const items = await service.getItems();
+
+        for (const offerId of ["A-1", "A-2", "A-3", "A-4", "A-5"]) {
+            expect(items.get(offerId)?.price).toBeNull();
+        }
+    });
+
+    it("falls back to the last known items when the script is down", async () => {
         const { service, store } = build({
             get: throwError(() => new Error("down")),
         });
-        store.set("sheet:stocks:stale", JSON.stringify({ "A-1": 2 }));
+        store.set(
+            "sheet:items:stale",
+            JSON.stringify({ "A-1": { stock: 2, price: 0 } }),
+        );
 
-        const stocks = await service.getStocks();
+        const items = await service.getItems();
 
-        expect(stocks.get("A-1")).toBe(2);
+        expect(items.get("A-1")).toEqual({ stock: 2, price: 0 });
     });
 
     it("fails when the script is down and there is nothing to fall back to", async () => {
         const { service } = build({ get: throwError(() => new Error("down")) });
 
-        await expect(service.getStocks()).rejects.toBeInstanceOf(
+        await expect(service.getItems()).rejects.toBeInstanceOf(
             BadGatewayException,
         );
     });
@@ -78,7 +115,7 @@ describe("SheetService", () => {
     it("treats an HTML page instead of JSON as a failure", async () => {
         const { service } = build({ get: of({ data: "<html></html>" }) });
 
-        await expect(service.getStocks()).rejects.toBeInstanceOf(
+        await expect(service.getItems()).rejects.toBeInstanceOf(
             BadGatewayException,
         );
     });
@@ -99,7 +136,7 @@ describe("SheetService", () => {
             },
             expect.anything(),
         );
-        expect(redis.del).toHaveBeenCalledWith("sheet:stocks");
+        expect(redis.del).toHaveBeenCalledWith("sheet:items");
     });
 
     it("reports a sold out probe as a bad request", async () => {

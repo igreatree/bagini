@@ -51,7 +51,7 @@ export class OrderService {
 
         // Пробники — позиции из таблицы остатков. Клиентскому признаку верить нельзя,
         // поэтому определяем их по артикулу и проверяем даже для обычной корзины.
-        const probeStocks = await this.sheet.getStocks();
+        const probeItems = await this.sheet.getItems();
 
         const items = [...quantities].map(([productId, quantity]) => {
             const product = products.get(productId);
@@ -61,14 +61,15 @@ export class OrderService {
                 );
             }
 
-            // Остаток пробника ведётся в таблице, остаток на Ozon для него не важен
-            const isProbe = probeStocks.has(product.offerId);
+            // Остаток и цена пробника ведутся в таблице, остаток и цена на Ozon для него не важны
+            const probe = probeItems.get(product.offerId);
+            const isProbe = probe !== undefined;
             if (!isProbe && quantity > product.stock) {
                 throw new BadRequestException(
                     `«${product.productName}»: в наличии только ${product.stock} шт.`,
                 );
             }
-            if (isProbe && (probeStocks.get(product.offerId) ?? 0) < 1) {
+            if (probe && probe.stock < 1) {
                 throw new BadRequestException(
                     `«${product.productName}»: пробники закончились`,
                 );
@@ -81,7 +82,7 @@ export class OrderService {
             return {
                 productId,
                 productName: product.productName,
-                price: product.price,
+                price: probe?.price ?? product.price,
                 quantity,
                 probeOfferId: isProbe ? product.offerId : undefined,
             };

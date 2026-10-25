@@ -8,7 +8,7 @@ import {
 } from "@nestjs/common";
 import { CatalogService } from "./catalog.service";
 import { ListProductsDto } from "./dto/list-products.dto";
-import { SheetService } from "../sheet/sheet.service";
+import { SheetItem, SheetService } from "../sheet/sheet.service";
 
 const MAX_IDS = 50;
 const PRODUCT_ID = /^\d+$/;
@@ -22,43 +22,50 @@ export class CatalogController {
 
     // Пробники продаются через таблицу остатков. Если она недоступна, каталог всё
     // равно открывается: при оформлении заказа пробники проверяются отдельно.
-    private async probeStocks() {
+    private async probeItems() {
         try {
-            return await this.sheet.getStocks();
+            return await this.sheet.getItems();
         } catch {
-            return new Map<string, number>();
+            return new Map<string, SheetItem>();
         }
     }
 
-    // Пробник можно купить в одном экземпляре и только пока он есть в таблице
-    private markProbes<T extends { offerId: string; stock: number }>(
-        products: T[],
-        stocks: Map<string, number>,
-    ) {
+    // Пробник можно купить в одном экземпляре и только пока он есть в таблице.
+    // Цена пробника — из таблицы, цена на Ozon для него не важна.
+    private markProbes<
+        T extends { offerId: string; stock: number; price: number },
+    >(products: T[], items: Map<string, SheetItem>) {
         return products.flatMap((product) => {
-            const sheetStock = stocks.get(product.offerId);
-            if (sheetStock === undefined) return [{ ...product, probe: false }];
-            if (sheetStock < 1) return [];
-            return [{ ...product, probe: true, stock: 1 }];
+            const sheetItem = items.get(product.offerId);
+            if (sheetItem === undefined) return [{ ...product, probe: false }];
+            if (sheetItem.stock < 1) return [];
+            return [
+                {
+                    ...product,
+                    probe: true,
+                    stock: 1,
+                    price: sheetItem.price ?? product.price,
+                },
+            ];
         });
     }
 
     @Get()
     async list(@Query() query: ListProductsDto) {
-        const stocks = await this.probeStocks();
+        const items = await this.probeItems();
         return this.catalogService.list({
             ...query,
-            excludeOfferIds: new Set(stocks.keys()),
+            excludeOfferIds: new Set(items.keys()),
         });
     }
 
     @Get("probes")
     async probes() {
-        const stocks = await this.sheet.getStocks();
+        const sheetItems = await this.sheet.getItems();
         const products = await this.catalogService.findByOfferIds([
-            ...stocks.keys(),
+            ...sheetItems.keys(),
         ]);
-        return { items: this.markProbes(products, stocks) };
+        return { items: this.markProbes(products, sheetItems) };
     }
 
     // Товары корзины: ?ids=1,2,3. Недоступные товары в ответ не попадают.
@@ -72,7 +79,7 @@ export class CatalogController {
             ? await this.catalogService.findByIds(list)
             : [];
         return {
-            items: this.markProbes(products, await this.probeStocks()),
+            items: this.markProbes(products, await this.probeItems()),
         };
     }
 
@@ -82,7 +89,7 @@ export class CatalogController {
             ? await this.catalogService.findOne(id)
             : null;
         const [product] = found
-            ? this.markProbes([found], await this.probeStocks())
+            ? this.markProbes([found], await this.probeItems())
             : [];
         if (!product) throw new NotFoundException("Товар не найден");
         return { product };

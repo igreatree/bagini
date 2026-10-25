@@ -25,6 +25,7 @@ export const ProductCard = ({
             padding={0}
             bg="#ffffff9c"
             onClick={() => router.push(`/product/${id}`)}
+            style={{ display: "flex", flexDirection: "column" }}
         >
             <Card.Section
                 pos="relative"
@@ -56,7 +57,7 @@ export const ProductCard = ({
                     </Center>
                 )}
             </Card.Section>
-            <Stack p="sm" gap="xs">
+            <Stack p="sm" gap="xs" style={{ flex: 1 }}>
                 <Text fw={500} lineClamp={2} title={productName}>
                     {productName}
                 </Text>
@@ -68,6 +69,7 @@ export const ProductCard = ({
                     }}
                     leftSection={inBasket ? <IconCheck /> : <IconBasket />}
                     fullWidth
+                    mt="auto"
                     variant={inBasket ? "outline" : "filled"}
                 >
                     {formatPrice(price)}₽

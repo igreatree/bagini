@@ -205,7 +205,7 @@ export class CatalogService {
     private async fetchProbes() {
         let offerIds: string[];
         try {
-            offerIds = [...(await this.sheet.getStocks()).keys()];
+            offerIds = [...(await this.sheet.getItems()).keys()];
         } catch {
             // Без таблицы каталог работает, а пробники при оформлении заказа не найдутся
             return [];

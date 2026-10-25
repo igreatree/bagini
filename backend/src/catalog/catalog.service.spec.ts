@@ -96,9 +96,14 @@ describe("CatalogService", () => {
             });
         });
         const sheet = {
-            getStocks: jest
-                .fn()
-                .mockResolvedValue(new Map(Object.entries(sheetStocks))),
+            getItems: jest.fn().mockResolvedValue(
+                new Map(
+                    Object.entries(sheetStocks).map(([offerId, stock]) => [
+                        offerId,
+                        { stock, price: null },
+                    ]),
+                ),
+            ),
         };
         const service = new CatalogService(
             { post } as any,

@@ -18,10 +18,12 @@ describe("OrderService.calculate", () => {
         stock,
     });
 
-    // probeStocks: артикул → остаток в таблице пробников
+    // probeStocks: артикул → остаток в таблице пробников,
+    // probePrices: артикул → цена в таблице (без неё действует цена Ozon)
     const build = (
         products: ReturnType<typeof product>[],
         probeStocks: Record<string, number> = {},
+        probePrices: Record<string, number> = {},
     ) => {
         const findByIds = jest.fn().mockResolvedValue(products);
         const service = new OrderService(
@@ -31,9 +33,14 @@ describe("OrderService.calculate", () => {
                 findByIds,
             } as any,
             {
-                getStocks: jest
-                    .fn()
-                    .mockResolvedValue(new Map(Object.entries(probeStocks))),
+                getItems: jest.fn().mockResolvedValue(
+                    new Map(
+                        Object.entries(probeStocks).map(([offerId, stock]) => [
+                            offerId,
+                            { stock, price: probePrices[offerId] ?? null },
+                        ]),
+                    ),
+                ),
             } as any,
         );
         return { service, findByIds };
@@ -107,6 +114,34 @@ describe("OrderService.calculate", () => {
             ]);
 
             expect(result.items[0].probeOfferId).toBe("offer-2");
+        });
+
+        it("takes the probe price from the sheet instead of Ozon", async () => {
+            const { service } = build(
+                [product("1", 500, 10), product("2", 90, 10)],
+                { "offer-2": 3 },
+                { "offer-2": 0 },
+            );
+
+            const result = await service.calculate([
+                { productId: "1", quantity: 1 },
+                { productId: "2", quantity: 1 },
+            ]);
+
+            expect(result.items.map((i) => i.price)).toEqual([500, 0]);
+            expect(result.total).toBe(500);
+        });
+
+        it("falls back to the Ozon price when the sheet has none", async () => {
+            const { service } = build([product("2", 90, 10)], {
+                "offer-2": 3,
+            });
+
+            const result = await service.calculate([
+                { productId: "2", quantity: 1 },
+            ]);
+
+            expect(result.items[0].price).toBe(90);
         });
 
         it("rejects more than one piece of a probe", async () => {
@@ -196,7 +231,11 @@ describe("OrderService.create with a probe", () => {
                 }),
         };
         const sheet = {
-            getStocks: jest.fn().mockResolvedValue(new Map([["offer-2", 3]])),
+            getItems: jest
+                .fn()
+                .mockResolvedValue(
+                    new Map([["offer-2", { stock: 3, price: null }]]),
+                ),
             reserve:
                 overrides.reserve ?? jest.fn().mockResolvedValue(undefined),
             release: jest.fn().mockResolvedValue(undefined),

@@ -9,14 +9,24 @@ import { HttpService } from "@nestjs/axios";
 import { firstValueFrom } from "rxjs";
 import { RedisService } from "../redis/redis.service";
 
-const STOCKS_CACHE_KEY = "sheet:stocks";
+const ITEMS_CACHE_KEY = "sheet:items";
 // Остатки меняются при каждой покупке, поэтому кэш короткий
-const STOCKS_CACHE_TTL = 30;
+const ITEMS_CACHE_TTL = 30;
 // Последний удачный ответ: по нему определяем, какие товары пробники, пока Apps Script недоступен
-const STOCKS_STALE_KEY = "sheet:stocks:stale";
-const STOCKS_STALE_TTL = 24 * 60 * 60;
+const ITEMS_STALE_KEY = "sheet:items:stale";
+const ITEMS_STALE_TTL = 24 * 60 * 60;
 
 export type StockChange = { offerId: string; quantity: number };
+
+// price — цена из таблицы, null если в ответе её нет (тогда действует цена Ozon)
+export type SheetItem = { stock: number; price: number | null };
+
+// Пустая или некорректная ячейка — не цена: иначе пустая клетка превратилась бы в 0 ₽
+const toPrice = (raw: unknown) => {
+    if (raw === null || raw === undefined || raw === "") return null;
+    const price = Number(raw);
+    return Number.isFinite(price) && price >= 0 ? Math.round(price) : null;
+};
 
 // Таблица остатков пробников (Google Sheets) доступна через веб-приложение Apps Script
 @Injectable()
@@ -69,42 +79,45 @@ export class SheetService {
         }
     }
 
-    private async fetchStocks() {
+    private async fetchItems() {
         const data = await this.request("get");
         if (!data.ok) {
             this.logger.error(`Apps Script get: ${data.error}`);
             throw new BadGatewayException("Ошибка сервиса пробников");
         }
-        const stocks: Record<string, number> = {};
+        const items: Record<string, SheetItem> = {};
         for (const item of data.items ?? []) {
-            stocks[String(item.offerId)] = Number(item.stock);
+            items[String(item.offerId)] = {
+                stock: Number(item.stock),
+                price: toPrice(item.price),
+            };
         }
-        return stocks;
+        return items;
     }
 
-    // Артикул Ozon → сколько штук осталось в таблице
-    async getStocks(): Promise<Map<string, number>> {
-        const cached = await this.redis.get(STOCKS_CACHE_KEY);
+    // Артикул Ozon → остаток и цена пробника в таблице
+    async getItems(): Promise<Map<string, SheetItem>> {
+        const cached = await this.redis.get(ITEMS_CACHE_KEY);
         if (cached) return new Map(Object.entries(JSON.parse(cached)));
 
         try {
-            const stocks = await this.fetchStocks();
-            const json = JSON.stringify(stocks);
+            const items = await this.fetchItems();
+            const json = JSON.stringify(items);
             await this.redis.setWithExpiry(
-                STOCKS_CACHE_KEY,
+                ITEMS_CACHE_KEY,
                 json,
-                STOCKS_CACHE_TTL,
+                ITEMS_CACHE_TTL,
             );
             await this.redis.setWithExpiry(
-                STOCKS_STALE_KEY,
+                ITEMS_STALE_KEY,
                 json,
-                STOCKS_STALE_TTL,
+                ITEMS_STALE_TTL,
             );
-            return new Map(Object.entries(stocks));
+            return new Map(Object.entries(items));
         } catch (error) {
-            const stale = await this.redis.get(STOCKS_STALE_KEY);
+            const stale = await this.redis.get(ITEMS_STALE_KEY);
             if (!stale) throw error;
-            this.logger.warn("Таблица недоступна, используем прошлые остатки");
+            this.logger.warn("Таблица недоступна, используем прошлые данные");
             return new Map(Object.entries(JSON.parse(stale)));
         }
     }
@@ -112,7 +125,7 @@ export class SheetService {
     // Таблица списывает остатки под блокировкой и либо принимает все позиции, либо ни одной
     private async change(action: "reserve" | "release", items: StockChange[]) {
         const data = await this.request("post", { action, items });
-        await this.redis.del(STOCKS_CACHE_KEY);
+        await this.redis.del(ITEMS_CACHE_KEY);
         if (data.ok) return;
 
         if (data.error === "OUT_OF_STOCK" || data.error === "NOT_FOUND") {
