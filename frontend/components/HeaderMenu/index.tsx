@@ -21,6 +21,10 @@ const menuItems = [
         href: "/",
     },
     {
+        label: "Пробники",
+        href: "/prob",
+    },
+    {
         label: "Мои заказы",
         href: "/orders",
         authOnly: true,

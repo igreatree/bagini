@@ -50,6 +50,11 @@ model Order {
     paymentUrl       String?
     paidAt           DateTime?
 
+    // Пробник можно купить один раз на аккаунт: пока в заказе есть пробник и он не
+    // отменён, здесь лежит id покупателя, а уникальность не даёт оформить второй.
+    // При отмене заказа значение сбрасывается.
+    probeUserId      Int?               @unique
+
     itemsTotal       Int
     deliveryPrice    Int
     total            Int
@@ -76,4 +81,7 @@ model OrderItem {
     productName      String
     price            Int
     quantity         Int
+
+    // Артикул Ozon, если позиция — пробник (остаток списан в таблице)
+    probeOfferId     String?
 }

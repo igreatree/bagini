@@ -13,6 +13,7 @@ export const ProductCard = ({
     id,
     price,
     images,
+    probe,
 }: IProductCard) => {
     const { basket, updateBasket } = useUserStore();
     const inBasket = basket.find((item) => item.id === id);
@@ -32,9 +33,9 @@ export const ProductCard = ({
             >
                 <Badge
                     style={{ position: "absolute", right: 10, top: 10 }}
-                    color="red"
+                    color={probe ? "pink" : "red"}
                 >
-                    Новинка
+                    {probe ? "Пробник" : "Новинка"}
                 </Badge>
                 {images[0] ? (
                     <Image

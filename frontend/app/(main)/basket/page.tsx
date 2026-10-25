@@ -77,7 +77,7 @@ export default function BasketPage() {
                 unavailable.forEach((id) => updateBasket(id));
                 notifications.show({
                     message:
-                        "Некоторые товары закончились и удалены из корзины",
+                        "Некоторые товары больше недоступны и удалены из корзины",
                     color: "gray",
                 });
             }

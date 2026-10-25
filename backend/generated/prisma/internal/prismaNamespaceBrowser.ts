@@ -94,6 +94,7 @@ export const OrderScalarFieldEnum = {
   ozonOrderId: 'ozonOrderId',
   paymentUrl: 'paymentUrl',
   paidAt: 'paidAt',
+  probeUserId: 'probeUserId',
   itemsTotal: 'itemsTotal',
   deliveryPrice: 'deliveryPrice',
   total: 'total',
@@ -115,7 +116,8 @@ export const OrderItemScalarFieldEnum = {
   productId: 'productId',
   productName: 'productName',
   price: 'price',
-  quantity: 'quantity'
+  quantity: 'quantity',
+  probeOfferId: 'probeOfferId'
 } as const
 
 export type OrderItemScalarFieldEnum = (typeof OrderItemScalarFieldEnum)[keyof typeof OrderItemScalarFieldEnum]

@@ -38,6 +38,14 @@ export class OrderController {
         return { orders };
     }
 
+    // Объявлен до :id, иначе "probe" будет принят за номер заказа
+    @UseGuards(JwtCookieAuthGuard)
+    @Get("probe")
+    async findProbePurchase(@Request() req) {
+        const purchase = await this.orderService.findProbePurchase(req.user.id);
+        return { purchase };
+    }
+
     @UseGuards(JwtCookieAuthGuard)
     @Get(":id")
     async findOne(@Request() req, @Param("id", ParseIntPipe) id: number) {

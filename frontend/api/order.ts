@@ -3,6 +3,7 @@ import type {
     ErrorResponseType,
     OrderQuoteType,
     OrderType,
+    ProbePurchaseType,
 } from "../types";
 import Api from "./client";
 
@@ -54,6 +55,19 @@ export const getOrders = async (): Promise<
         return response.data;
     } catch (error) {
         console.error("getOrders error:", error);
+        return error as ErrorResponseType;
+    }
+};
+
+export const getProbePurchase = async (): Promise<
+    { purchase: ProbePurchaseType | null } | ErrorResponseType
+> => {
+    try {
+        const response = await Api.get("/order/probe");
+
+        return response.data;
+    } catch (error) {
+        console.error("getProbePurchase error:", error);
         return error as ErrorResponseType;
     }
 };

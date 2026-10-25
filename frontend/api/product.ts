@@ -29,6 +29,19 @@ export const getProduct = async (
     }
 };
 
+export const getProbes = async (): Promise<
+    { items: IProduct[] } | ErrorResponseType
+> => {
+    try {
+        const response = await Api.get("/products/probes");
+
+        return response.data;
+    } catch (error) {
+        console.error("getProbes error:", error);
+        return error as ErrorResponseType;
+    }
+};
+
 export const getProductsByIds = async (
     ids: string[],
 ): Promise<{ items: IProduct[] } | ErrorResponseType> => {

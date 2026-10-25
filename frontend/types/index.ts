@@ -31,13 +31,15 @@ export interface IProduct {
     price: number;
     images: string[];
     description?: string;
-    // Сколько штук есть в наличии
+    // Сколько штук можно купить
     stock: number;
+    // Пробник: продаётся отдельно, один на аккаунт
+    probe?: boolean;
 }
 
 export type IProductCard = Pick<
     IProduct,
-    "productName" | "price" | "images" | "id"
+    "productName" | "price" | "images" | "id" | "probe"
 >;
 
 export type ProductsPageType = {
@@ -72,6 +74,12 @@ export type OrderType = {
     deliveryPrice: number;
     total: number;
     paymentUrl: string | null;
+};
+
+// Заказ с пробником, который занимает лимит аккаунта (отменённые не учитываются)
+export type ProbePurchaseType = {
+    id: number;
+    status: OrderStatusType;
 };
 
 export type OrderQuoteType = {

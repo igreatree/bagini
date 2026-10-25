@@ -34,7 +34,16 @@ describe("CatalogService", () => {
         process.env = { ...env };
     });
 
-    const build = (infoItems: unknown[] = []) => {
+    // marked: id товаров с маркировкой; unknown: id, для которых Ozon не вернул атрибуты;
+    // sheet: остатки пробников в таблице по артикулу
+    const build = (
+        infoItems: unknown[] = [],
+        {
+            marked = [] as number[],
+            unknown = [] as number[],
+            sheet: sheetStocks = {} as Record<string, number>,
+        } = {},
+    ) => {
         const store = new Map<string, string>();
         const redis = {
             get: jest.fn(async (key: string) => store.get(key) ?? null),
@@ -58,11 +67,44 @@ describe("CatalogService", () => {
             if (url.endsWith("/v3/product/info/list")) {
                 return of({ data: { items: infoItems } });
             }
+            if (url.endsWith("/v4/product/info/attributes")) {
+                return of({
+                    data: {
+                        result: infoItems
+                            .map((item: any) => item.id)
+                            .filter((id) => !unknown.includes(id))
+                            .map((id) => ({
+                                id,
+                                attributes: [
+                                    {
+                                        id: 23536,
+                                        values: [
+                                            {
+                                                value: String(
+                                                    marked.includes(id),
+                                                ),
+                                            },
+                                        ],
+                                    },
+                                ],
+                            })),
+                    },
+                });
+            }
             return of({
                 data: { result: { description: "Первая<br>строка <b>2</b>" } },
             });
         });
-        const service = new CatalogService({ post } as any, redis as any);
+        const sheet = {
+            getStocks: jest
+                .fn()
+                .mockResolvedValue(new Map(Object.entries(sheetStocks))),
+        };
+        const service = new CatalogService(
+            { post } as any,
+            redis as any,
+            sheet as any,
+        );
         return { service, post, redis };
     };
 
@@ -148,7 +190,31 @@ describe("CatalogService", () => {
         await service.list({ page: 1, limit: 10 });
 
         expect(post.mock.calls.length).toBe(callsAfterFirst);
-        expect(redis.setWithExpiry).toHaveBeenCalledTimes(1);
+        const listWrites = redis.setWithExpiry.mock.calls.filter(
+            ([key]) => key === "catalog:products",
+        );
+        expect(listWrites).toHaveLength(1);
+    });
+
+    it("hides products that need a marking code or have unknown marking", async () => {
+        const { service } = build(products, { marked: [2], unknown: [3] });
+
+        const result = await service.list({ page: 1, limit: 10 });
+
+        expect(result.items.map((p) => p.id)).toEqual(["1"]);
+    });
+
+    it("loads marking only for products it has not seen yet", async () => {
+        const { service, post } = build(products);
+        const attributeCalls = () =>
+            post.mock.calls.filter(([url]) =>
+                String(url).endsWith("/v4/product/info/attributes"),
+            ).length;
+
+        await service.list({ page: 1, limit: 10 });
+        await service.findByIds(["1"], { fresh: true });
+
+        expect(attributeCalls()).toBe(1);
     });
 
     it("skips the cache when fresh data is requested", async () => {
@@ -169,6 +235,43 @@ describe("CatalogService", () => {
         const found = await service.findByIds(["2", "404"]);
 
         expect(found.map((p) => p.id)).toEqual(["2"]);
+    });
+
+    it("loads sheet probes by offer id even when Ozon has no stock", async () => {
+        const probe = raw(9, "Пробник", "150", { stocks: { stocks: [] } });
+        const { service, post } = build([probe], { sheet: { "offer-9": 20 } });
+
+        const found = await service.findByOfferIds(["offer-9"]);
+
+        expect(found.map((p) => p.id)).toEqual(["9"]);
+        expect(post).toHaveBeenCalledWith(
+            expect.stringContaining("/v3/product/info/list"),
+            { offer_id: ["offer-9"] },
+            expect.anything(),
+        );
+    });
+
+    it("keeps a probe that is also on sale once", async () => {
+        const { service } = build(products.slice(0, 2), {
+            sheet: { "offer-1": 5 },
+        });
+
+        const found = await service.findByIds(["1", "2"]);
+
+        expect(found.map((p) => p.id)).toEqual(["1", "2"]);
+    });
+
+    it("hides excluded offers from the list", async () => {
+        const { service } = build(products.slice(0, 3));
+
+        const page = await service.list({
+            page: 1,
+            limit: 24,
+            excludeOfferIds: new Set(["offer-1"]),
+        });
+
+        expect(page.items.map((p) => p.id)).toEqual(["2", "3"]);
+        expect(page.total).toBe(2);
     });
 
     it("returns product with plain-text description", async () => {

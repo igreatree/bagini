@@ -1,6 +1,7 @@
 import {
     BadRequestException,
     Injectable,
+    Logger,
     NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma.service";
@@ -8,6 +9,7 @@ import { OzonService } from "../payment/ozon.service";
 import type { OrderStatus } from "../../generated/prisma/enums";
 import { CreateOrderDto, OrderItemDto } from "./dto/create-order.dto";
 import { CatalogService } from "../catalog/catalog.service";
+import { SheetService } from "../sheet/sheet.service";
 
 // Статусы заказа на стороне Ozon, которые меняют статус заказа в магазине.
 // Остальные (например, STATUS_PAYMENT_PENDING) оставляют заказ как есть.
@@ -19,10 +21,13 @@ const mapOzonStatus = (ozonStatus: string): OrderStatus | null => {
 
 @Injectable()
 export class OrderService {
+    private readonly logger = new Logger(OrderService.name);
+
     constructor(
         private prisma: PrismaService,
         private ozon: OzonService,
         private catalog: CatalogService,
+        private sheet: SheetService,
     ) {}
 
     // Цены берём из каталога Ozon на сервере, клиентским ценам доверять нельзя
@@ -44,6 +49,10 @@ export class OrderService {
             ),
         );
 
+        // Пробники — позиции из таблицы остатков. Клиентскому признаку верить нельзя,
+        // поэтому определяем их по артикулу и проверяем даже для обычной корзины.
+        const probeStocks = await this.sheet.getStocks();
+
         const items = [...quantities].map(([productId, quantity]) => {
             const product = products.get(productId);
             if (!product) {
@@ -51,9 +60,22 @@ export class OrderService {
                     `Товар ${productId} больше не доступен`,
                 );
             }
-            if (quantity > product.stock) {
+
+            // Остаток пробника ведётся в таблице, остаток на Ozon для него не важен
+            const isProbe = probeStocks.has(product.offerId);
+            if (!isProbe && quantity > product.stock) {
                 throw new BadRequestException(
                     `«${product.productName}»: в наличии только ${product.stock} шт.`,
+                );
+            }
+            if (isProbe && (probeStocks.get(product.offerId) ?? 0) < 1) {
+                throw new BadRequestException(
+                    `«${product.productName}»: пробники закончились`,
+                );
+            }
+            if (isProbe && quantity > 1) {
+                throw new BadRequestException(
+                    `«${product.productName}»: пробник можно купить только в одном экземпляре`,
                 );
             }
             return {
@@ -61,8 +83,15 @@ export class OrderService {
                 productName: product.productName,
                 price: product.price,
                 quantity,
+                probeOfferId: isProbe ? product.offerId : undefined,
             };
         });
+
+        if (items.filter((item) => item.probeOfferId).length > 1) {
+            throw new BadRequestException(
+                "В заказе может быть только один пробник",
+            );
+        }
 
         const itemsTotal = items.reduce(
             (sum, item) => sum + item.price * item.quantity,
@@ -81,20 +110,47 @@ export class OrderService {
     async create(userId: number, dto: CreateOrderDto) {
         const { items, itemsTotal, total, skus } = await this.calculate(
             dto.items,
-            { fresh: true },
+            {
+                fresh: true,
+            },
         );
 
-        const order = await this.prisma.order.create({
-            data: {
-                userId,
-                itemsTotal,
-                deliveryPrice: 0,
-                total,
-                comment: dto.comment,
-                items: { create: items },
-            },
-            include: { items: true },
-        });
+        const probe = items.find((item) => item.probeOfferId);
+
+        const order = await this.prisma.order
+            .create({
+                data: {
+                    userId,
+                    itemsTotal,
+                    deliveryPrice: 0,
+                    total,
+                    comment: dto.comment,
+                    probeUserId: probe ? userId : undefined,
+                    items: { create: items },
+                },
+                include: { items: true },
+            })
+            .catch((error) => {
+                // Уникальный probeUserId: у аккаунта уже есть заказ с пробником
+                if (probe && error?.code === "P2002") {
+                    throw new BadRequestException(
+                        "Пробник можно купить только один раз на аккаунт",
+                    );
+                }
+                throw error;
+            });
+
+        if (probe) {
+            try {
+                await this.sheet.reserve([
+                    { offerId: probe.probeOfferId!, quantity: probe.quantity },
+                ]);
+            } catch (error) {
+                // Остаток не списан, возвращать в таблицу нечего
+                await this.cancel(order.id, { release: false });
+                throw error;
+            }
+        }
 
         const user = await this.prisma.user.findUnique({
             where: { id: userId },
@@ -118,11 +174,52 @@ export class OrderService {
                 include: { items: true },
             });
         } catch (error) {
-            await this.prisma.order.update({
-                where: { id: order.id },
-                data: { status: "cancelled" },
-            });
+            await this.cancel(order.id);
             throw error;
+        }
+    }
+
+    // Пробник текущего аккаунта: неотменённый заказ, который занимает лимит
+    async findProbePurchase(userId: number) {
+        return this.prisma.order.findUnique({
+            where: { probeUserId: userId },
+            select: { id: true, status: true },
+        });
+    }
+
+    // Отмена освобождает лимит аккаунта и возвращает пробник в таблицу. Условие по
+    // статусу не даёт вернуть остаток дважды, если заказ отменяют параллельно.
+    private async cancel(id: number, options: { release?: boolean } = {}) {
+        const { count } = await this.prisma.order.updateMany({
+            where: { id, status: "pending" },
+            data: { status: "cancelled", probeUserId: null },
+        });
+        const order = await this.prisma.order.findUniqueOrThrow({
+            where: { id },
+            include: { items: true },
+        });
+        if (count > 0 && options.release !== false) {
+            await this.releaseProbes(order.items);
+        }
+        return order;
+    }
+
+    private async releaseProbes(
+        items: { probeOfferId: string | null; quantity: number }[],
+    ) {
+        const probes = items.flatMap((item) =>
+            item.probeOfferId
+                ? [{ offerId: item.probeOfferId, quantity: item.quantity }]
+                : [],
+        );
+        if (probes.length === 0) return;
+        try {
+            await this.sheet.release(probes);
+        } catch {
+            // Заказ уже отменён, остаток придётся поправить в таблице вручную
+            this.logger.error(
+                `Не удалось вернуть остаток в таблицу: ${JSON.stringify(probes)}`,
+            );
         }
     }
 
@@ -161,6 +258,8 @@ export class OrderService {
         });
         const status = ozonStatus && mapOzonStatus(ozonStatus);
         if (!status) return order;
+        if (status === "cancelled")
+            return (await this.cancel(order.id)) as unknown as T;
 
         return this.prisma.order.update({
             where: { id: order.id },

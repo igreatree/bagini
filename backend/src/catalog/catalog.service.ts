@@ -7,6 +7,7 @@ import {
 import { HttpService } from "@nestjs/axios";
 import { firstValueFrom } from "rxjs";
 import { RedisService } from "../redis/redis.service";
+import { SheetService } from "../sheet/sheet.service";
 
 const SELLER_API_URL = "https://api-seller.ozon.ru";
 // Максимум для /v3/product/list и /v3/product/info/list
@@ -17,6 +18,11 @@ const PRODUCT_VISIBILITY = "IN_SALE";
 const LIST_CACHE_KEY = "catalog:products";
 // Остатки меняются часто, поэтому кэш короткий
 const LIST_CACHE_TTL = 60;
+// Маркировка товара почти не меняется, поэтому кэшируем дольше
+const MARKING_CACHE_KEY = "catalog:marking";
+const MARKING_CACHE_TTL = 60 * 60;
+// Атрибут Ozon "Нужен код маркировки"
+const MARKING_ATTRIBUTE_ID = 23536;
 const DESCRIPTION_CACHE_TTL = 60 * 60;
 
 export type CatalogProduct = {
@@ -61,12 +67,16 @@ const toStock = (raw: any) =>
         )
         .reduce((sum, available) => sum + available, 0);
 
-const toProduct = (raw: any): CatalogProduct | null => {
+// Пробники продаются по остатку из таблицы, поэтому нулевой остаток на Ozon
+// для них не повод скрывать товар (ignoreStock)
+const toProduct = (
+    raw: any,
+    options: { ignoreStock?: boolean } = {},
+): CatalogProduct | null => {
     const price = Math.round(Number(raw?.price));
     const stock = toStock(raw);
-    if (!raw?.id || !raw?.name || raw.is_archived || !(price > 0) || !stock) {
-        return null;
-    }
+    if (!raw?.id || !raw?.name || raw.is_archived || !(price > 0)) return null;
+    if (!stock && !options.ignoreStock) return null;
 
     return {
         id: String(raw.id),
@@ -83,6 +93,20 @@ const toProduct = (raw: any): CatalogProduct | null => {
         stock,
     };
 };
+
+const needsMarking = (item: any) =>
+    (
+        (item?.attributes ?? []) as {
+            id: number;
+            values?: { value?: string }[];
+        }[]
+    )
+        .filter((attribute) => attribute.id === MARKING_ATTRIBUTE_ID)
+        .some((attribute) =>
+            (attribute.values ?? []).some((value) =>
+                /^(true|да)$/i.test(String(value.value ?? "").trim()),
+            ),
+        );
 
 // В описании Ozon встречается HTML-разметка, оставляем только текст
 const toPlainText = (html: string) =>
@@ -101,6 +125,7 @@ export class CatalogService {
     constructor(
         private httpService: HttpService,
         private redis: RedisService,
+        private sheet: SheetService,
     ) {}
 
     private get credentials() {
@@ -148,6 +173,57 @@ export class CatalogService {
         return ids;
     }
 
+    // Для маркированных товаров Ozon Доставка требует двойную фискализацию с
+    // кодами маркировки, поэтому такие товары в магазине не продаём.
+    private async loadMarking(ids: string[]) {
+        const cached = await this.redis.get(MARKING_CACHE_KEY);
+        const marking: Record<string, boolean> = cached
+            ? JSON.parse(cached)
+            : {};
+
+        const missing = ids.filter((id) => !(id in marking));
+        for (const batch of chunk(missing, BATCH_SIZE)) {
+            const data = await this.post("/v4/product/info/attributes", {
+                filter: { product_id: batch, visibility: "ALL" },
+                limit: BATCH_SIZE,
+            });
+            for (const item of data?.result ?? []) {
+                marking[String(item.id)] = needsMarking(item);
+            }
+        }
+        if (missing.length > 0) {
+            await this.redis.setWithExpiry(
+                MARKING_CACHE_KEY,
+                JSON.stringify(marking),
+                MARKING_CACHE_TTL,
+            );
+        }
+        return marking;
+    }
+
+    // Пробники из таблицы остатков: ищем по артикулу, без фильтра «в продаже»
+    private async fetchProbes() {
+        let offerIds: string[];
+        try {
+            offerIds = [...(await this.sheet.getStocks()).keys()];
+        } catch {
+            // Без таблицы каталог работает, а пробники при оформлении заказа не найдутся
+            return [];
+        }
+
+        const probes: CatalogProduct[] = [];
+        for (const batch of chunk(offerIds, BATCH_SIZE)) {
+            const data = await this.post("/v3/product/info/list", {
+                offer_id: batch,
+            });
+            for (const raw of data?.items ?? []) {
+                const product = toProduct(raw, { ignoreStock: true });
+                if (product) probes.push(product);
+            }
+        }
+        return probes;
+    }
+
     private async fetchProducts() {
         const ids = await this.fetchProductIds();
         const products: CatalogProduct[] = [];
@@ -160,7 +236,17 @@ export class CatalogService {
                 if (product) products.push(product);
             }
         }
-        return products;
+
+        const known = new Set(products.map((product) => product.id));
+        products.push(
+            ...(await this.fetchProbes()).filter(
+                (probe) => !known.has(probe.id),
+            ),
+        );
+
+        // Товар, для которого признак маркировки не получен, не продаём
+        const marking = await this.loadMarking(products.map((p) => p.id));
+        return products.filter((product) => marking[product.id] === false);
     }
 
     private async loadAll(fresh = false): Promise<CatalogProduct[]> {
@@ -192,12 +278,16 @@ export class CatalogService {
         page: number;
         limit: number;
         search?: string;
+        // Товары, которые продаются отдельно (пробники), в общем каталоге не показываем
+        excludeOfferIds?: Set<string>;
     }): Promise<CatalogPage> {
         const words = (params.search ?? "")
             .toLowerCase()
             .split(/\s+/)
             .filter(Boolean);
-        const all = await this.getAll();
+        const all = (await this.getAll()).filter(
+            (product) => !params.excludeOfferIds?.has(product.offerId),
+        );
         const found = words.length
             ? all.filter((product) => {
                   const haystack =
@@ -223,6 +313,12 @@ export class CatalogService {
         const wanted = new Set(ids);
         const all = await this.getAll(options.fresh);
         return all.filter((product) => wanted.has(product.id));
+    }
+
+    async findByOfferIds(offerIds: string[]) {
+        const wanted = new Set(offerIds);
+        const all = await this.getAll();
+        return all.filter((product) => wanted.has(product.offerId));
     }
 
     async findOne(id: string) {

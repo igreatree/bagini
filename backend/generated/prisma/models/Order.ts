@@ -29,6 +29,7 @@ export type AggregateOrder = {
 export type OrderAvgAggregateOutputType = {
   id: number | null
   userId: number | null
+  probeUserId: number | null
   itemsTotal: number | null
   deliveryPrice: number | null
   total: number | null
@@ -37,6 +38,7 @@ export type OrderAvgAggregateOutputType = {
 export type OrderSumAggregateOutputType = {
   id: number | null
   userId: number | null
+  probeUserId: number | null
   itemsTotal: number | null
   deliveryPrice: number | null
   total: number | null
@@ -50,6 +52,7 @@ export type OrderMinAggregateOutputType = {
   ozonOrderId: string | null
   paymentUrl: string | null
   paidAt: Date | null
+  probeUserId: number | null
   itemsTotal: number | null
   deliveryPrice: number | null
   total: number | null
@@ -70,6 +73,7 @@ export type OrderMaxAggregateOutputType = {
   ozonOrderId: string | null
   paymentUrl: string | null
   paidAt: Date | null
+  probeUserId: number | null
   itemsTotal: number | null
   deliveryPrice: number | null
   total: number | null
@@ -90,6 +94,7 @@ export type OrderCountAggregateOutputType = {
   ozonOrderId: number
   paymentUrl: number
   paidAt: number
+  probeUserId: number
   itemsTotal: number
   deliveryPrice: number
   total: number
@@ -107,6 +112,7 @@ export type OrderCountAggregateOutputType = {
 export type OrderAvgAggregateInputType = {
   id?: true
   userId?: true
+  probeUserId?: true
   itemsTotal?: true
   deliveryPrice?: true
   total?: true
@@ -115,6 +121,7 @@ export type OrderAvgAggregateInputType = {
 export type OrderSumAggregateInputType = {
   id?: true
   userId?: true
+  probeUserId?: true
   itemsTotal?: true
   deliveryPrice?: true
   total?: true
@@ -128,6 +135,7 @@ export type OrderMinAggregateInputType = {
   ozonOrderId?: true
   paymentUrl?: true
   paidAt?: true
+  probeUserId?: true
   itemsTotal?: true
   deliveryPrice?: true
   total?: true
@@ -148,6 +156,7 @@ export type OrderMaxAggregateInputType = {
   ozonOrderId?: true
   paymentUrl?: true
   paidAt?: true
+  probeUserId?: true
   itemsTotal?: true
   deliveryPrice?: true
   total?: true
@@ -168,6 +177,7 @@ export type OrderCountAggregateInputType = {
   ozonOrderId?: true
   paymentUrl?: true
   paidAt?: true
+  probeUserId?: true
   itemsTotal?: true
   deliveryPrice?: true
   total?: true
@@ -275,6 +285,7 @@ export type OrderGroupByOutputType = {
   ozonOrderId: string | null
   paymentUrl: string | null
   paidAt: Date | null
+  probeUserId: number | null
   itemsTotal: number
   deliveryPrice: number
   total: number
@@ -318,6 +329,7 @@ export type OrderWhereInput = {
   ozonOrderId?: Prisma.StringNullableFilter<"Order"> | string | null
   paymentUrl?: Prisma.StringNullableFilter<"Order"> | string | null
   paidAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
+  probeUserId?: Prisma.IntNullableFilter<"Order"> | number | null
   itemsTotal?: Prisma.IntFilter<"Order"> | number
   deliveryPrice?: Prisma.IntFilter<"Order"> | number
   total?: Prisma.IntFilter<"Order"> | number
@@ -340,6 +352,7 @@ export type OrderOrderByWithRelationInput = {
   ozonOrderId?: Prisma.SortOrderInput | Prisma.SortOrder
   paymentUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   paidAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  probeUserId?: Prisma.SortOrderInput | Prisma.SortOrder
   itemsTotal?: Prisma.SortOrder
   deliveryPrice?: Prisma.SortOrder
   total?: Prisma.SortOrder
@@ -358,6 +371,7 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   id?: number
   extId?: string
   ozonOrderId?: string
+  probeUserId?: number
   AND?: Prisma.OrderWhereInput | Prisma.OrderWhereInput[]
   OR?: Prisma.OrderWhereInput[]
   NOT?: Prisma.OrderWhereInput | Prisma.OrderWhereInput[]
@@ -377,7 +391,7 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   items?: Prisma.OrderItemListRelationFilter
-}, "id" | "extId" | "ozonOrderId">
+}, "id" | "extId" | "ozonOrderId" | "probeUserId">
 
 export type OrderOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -387,6 +401,7 @@ export type OrderOrderByWithAggregationInput = {
   ozonOrderId?: Prisma.SortOrderInput | Prisma.SortOrder
   paymentUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   paidAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  probeUserId?: Prisma.SortOrderInput | Prisma.SortOrder
   itemsTotal?: Prisma.SortOrder
   deliveryPrice?: Prisma.SortOrder
   total?: Prisma.SortOrder
@@ -415,6 +430,7 @@ export type OrderScalarWhereWithAggregatesInput = {
   ozonOrderId?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   paymentUrl?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   paidAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
+  probeUserId?: Prisma.IntNullableWithAggregatesFilter<"Order"> | number | null
   itemsTotal?: Prisma.IntWithAggregatesFilter<"Order"> | number
   deliveryPrice?: Prisma.IntWithAggregatesFilter<"Order"> | number
   total?: Prisma.IntWithAggregatesFilter<"Order"> | number
@@ -433,6 +449,7 @@ export type OrderCreateInput = {
   ozonOrderId?: string | null
   paymentUrl?: string | null
   paidAt?: Date | string | null
+  probeUserId?: number | null
   itemsTotal: number
   deliveryPrice: number
   total: number
@@ -455,6 +472,7 @@ export type OrderUncheckedCreateInput = {
   ozonOrderId?: string | null
   paymentUrl?: string | null
   paidAt?: Date | string | null
+  probeUserId?: number | null
   itemsTotal: number
   deliveryPrice: number
   total: number
@@ -474,6 +492,7 @@ export type OrderUpdateInput = {
   ozonOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  probeUserId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   itemsTotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryPrice?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
@@ -496,6 +515,7 @@ export type OrderUncheckedUpdateInput = {
   ozonOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  probeUserId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   itemsTotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryPrice?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
@@ -517,6 +537,7 @@ export type OrderCreateManyInput = {
   ozonOrderId?: string | null
   paymentUrl?: string | null
   paidAt?: Date | string | null
+  probeUserId?: number | null
   itemsTotal: number
   deliveryPrice: number
   total: number
@@ -535,6 +556,7 @@ export type OrderUpdateManyMutationInput = {
   ozonOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  probeUserId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   itemsTotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryPrice?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
@@ -555,6 +577,7 @@ export type OrderUncheckedUpdateManyInput = {
   ozonOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  probeUserId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   itemsTotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryPrice?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
@@ -585,6 +608,7 @@ export type OrderCountOrderByAggregateInput = {
   ozonOrderId?: Prisma.SortOrder
   paymentUrl?: Prisma.SortOrder
   paidAt?: Prisma.SortOrder
+  probeUserId?: Prisma.SortOrder
   itemsTotal?: Prisma.SortOrder
   deliveryPrice?: Prisma.SortOrder
   total?: Prisma.SortOrder
@@ -600,6 +624,7 @@ export type OrderCountOrderByAggregateInput = {
 export type OrderAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  probeUserId?: Prisma.SortOrder
   itemsTotal?: Prisma.SortOrder
   deliveryPrice?: Prisma.SortOrder
   total?: Prisma.SortOrder
@@ -613,6 +638,7 @@ export type OrderMaxOrderByAggregateInput = {
   ozonOrderId?: Prisma.SortOrder
   paymentUrl?: Prisma.SortOrder
   paidAt?: Prisma.SortOrder
+  probeUserId?: Prisma.SortOrder
   itemsTotal?: Prisma.SortOrder
   deliveryPrice?: Prisma.SortOrder
   total?: Prisma.SortOrder
@@ -633,6 +659,7 @@ export type OrderMinOrderByAggregateInput = {
   ozonOrderId?: Prisma.SortOrder
   paymentUrl?: Prisma.SortOrder
   paidAt?: Prisma.SortOrder
+  probeUserId?: Prisma.SortOrder
   itemsTotal?: Prisma.SortOrder
   deliveryPrice?: Prisma.SortOrder
   total?: Prisma.SortOrder
@@ -648,6 +675,7 @@ export type OrderMinOrderByAggregateInput = {
 export type OrderSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  probeUserId?: Prisma.SortOrder
   itemsTotal?: Prisma.SortOrder
   deliveryPrice?: Prisma.SortOrder
   total?: Prisma.SortOrder
@@ -708,6 +736,14 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null
 }
 
+export type NullableIntFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
 export type OrderCreateNestedOneWithoutItemsInput = {
   create?: Prisma.XOR<Prisma.OrderCreateWithoutItemsInput, Prisma.OrderUncheckedCreateWithoutItemsInput>
   connectOrCreate?: Prisma.OrderCreateOrConnectWithoutItemsInput
@@ -728,6 +764,7 @@ export type OrderCreateWithoutUserInput = {
   ozonOrderId?: string | null
   paymentUrl?: string | null
   paidAt?: Date | string | null
+  probeUserId?: number | null
   itemsTotal: number
   deliveryPrice: number
   total: number
@@ -748,6 +785,7 @@ export type OrderUncheckedCreateWithoutUserInput = {
   ozonOrderId?: string | null
   paymentUrl?: string | null
   paidAt?: Date | string | null
+  probeUserId?: number | null
   itemsTotal: number
   deliveryPrice: number
   total: number
@@ -798,6 +836,7 @@ export type OrderScalarWhereInput = {
   ozonOrderId?: Prisma.StringNullableFilter<"Order"> | string | null
   paymentUrl?: Prisma.StringNullableFilter<"Order"> | string | null
   paidAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
+  probeUserId?: Prisma.IntNullableFilter<"Order"> | number | null
   itemsTotal?: Prisma.IntFilter<"Order"> | number
   deliveryPrice?: Prisma.IntFilter<"Order"> | number
   total?: Prisma.IntFilter<"Order"> | number
@@ -816,6 +855,7 @@ export type OrderCreateWithoutItemsInput = {
   ozonOrderId?: string | null
   paymentUrl?: string | null
   paidAt?: Date | string | null
+  probeUserId?: number | null
   itemsTotal: number
   deliveryPrice: number
   total: number
@@ -837,6 +877,7 @@ export type OrderUncheckedCreateWithoutItemsInput = {
   ozonOrderId?: string | null
   paymentUrl?: string | null
   paidAt?: Date | string | null
+  probeUserId?: number | null
   itemsTotal: number
   deliveryPrice: number
   total: number
@@ -871,6 +912,7 @@ export type OrderUpdateWithoutItemsInput = {
   ozonOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  probeUserId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   itemsTotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryPrice?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
@@ -892,6 +934,7 @@ export type OrderUncheckedUpdateWithoutItemsInput = {
   ozonOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  probeUserId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   itemsTotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryPrice?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
@@ -911,6 +954,7 @@ export type OrderCreateManyUserInput = {
   ozonOrderId?: string | null
   paymentUrl?: string | null
   paidAt?: Date | string | null
+  probeUserId?: number | null
   itemsTotal: number
   deliveryPrice: number
   total: number
@@ -929,6 +973,7 @@ export type OrderUpdateWithoutUserInput = {
   ozonOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  probeUserId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   itemsTotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryPrice?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
@@ -949,6 +994,7 @@ export type OrderUncheckedUpdateWithoutUserInput = {
   ozonOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  probeUserId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   itemsTotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryPrice?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
@@ -969,6 +1015,7 @@ export type OrderUncheckedUpdateManyWithoutUserInput = {
   ozonOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  probeUserId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   itemsTotal?: Prisma.IntFieldUpdateOperationsInput | number
   deliveryPrice?: Prisma.IntFieldUpdateOperationsInput | number
   total?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1020,6 +1067,7 @@ export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   ozonOrderId?: boolean
   paymentUrl?: boolean
   paidAt?: boolean
+  probeUserId?: boolean
   itemsTotal?: boolean
   deliveryPrice?: boolean
   total?: boolean
@@ -1043,6 +1091,7 @@ export type OrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   ozonOrderId?: boolean
   paymentUrl?: boolean
   paidAt?: boolean
+  probeUserId?: boolean
   itemsTotal?: boolean
   deliveryPrice?: boolean
   total?: boolean
@@ -1064,6 +1113,7 @@ export type OrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   ozonOrderId?: boolean
   paymentUrl?: boolean
   paidAt?: boolean
+  probeUserId?: boolean
   itemsTotal?: boolean
   deliveryPrice?: boolean
   total?: boolean
@@ -1085,6 +1135,7 @@ export type OrderSelectScalar = {
   ozonOrderId?: boolean
   paymentUrl?: boolean
   paidAt?: boolean
+  probeUserId?: boolean
   itemsTotal?: boolean
   deliveryPrice?: boolean
   total?: boolean
@@ -1097,7 +1148,7 @@ export type OrderSelectScalar = {
   updatedAt?: boolean
 }
 
-export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "status" | "extId" | "ozonOrderId" | "paymentUrl" | "paidAt" | "itemsTotal" | "deliveryPrice" | "total" | "recipientName" | "city" | "address" | "postalCode" | "comment" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
+export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "status" | "extId" | "ozonOrderId" | "paymentUrl" | "paidAt" | "probeUserId" | "itemsTotal" | "deliveryPrice" | "total" | "recipientName" | "city" | "address" | "postalCode" | "comment" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
 export type OrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   items?: boolean | Prisma.Order$itemsArgs<ExtArgs>
@@ -1124,6 +1175,7 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     ozonOrderId: string | null
     paymentUrl: string | null
     paidAt: Date | null
+    probeUserId: number | null
     itemsTotal: number
     deliveryPrice: number
     total: number
@@ -1566,6 +1618,7 @@ export interface OrderFieldRefs {
   readonly ozonOrderId: Prisma.FieldRef<"Order", 'String'>
   readonly paymentUrl: Prisma.FieldRef<"Order", 'String'>
   readonly paidAt: Prisma.FieldRef<"Order", 'DateTime'>
+  readonly probeUserId: Prisma.FieldRef<"Order", 'Int'>
   readonly itemsTotal: Prisma.FieldRef<"Order", 'Int'>
   readonly deliveryPrice: Prisma.FieldRef<"Order", 'Int'>
   readonly total: Prisma.FieldRef<"Order", 'Int'>

@@ -60,7 +60,7 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 .next/
 out/
 
-
+!a.png
 # misc
 .DS_Store
 *.pem
