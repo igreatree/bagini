@@ -4,6 +4,11 @@ export const formatPrice = (price: number): string => {
     return price.toLocaleString("ru-RU");
 };
 
+// Пробники отдаём с нулевой ценой: вместо «0 ₽» показываем «Бесплатно»
+export const formatPriceLabel = (price: number, separator = ""): string => {
+    return price === 0 ? "Бесплатно" : `${formatPrice(price)}${separator}₽`;
+};
+
 export const processErrorMessage = (data: ErrorResponseType) => {
     const message = data.response?.data.message;
     if (message) {

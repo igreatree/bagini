@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { formatPrice } from "@/helpers";
+import { formatPriceLabel } from "@/helpers";
 import { useUserStore } from "@/store/user";
 import { IProduct } from "@/types";
 import {
@@ -219,16 +219,15 @@ export default function ProductPage() {
                                         size="md"
                                     />
                                     <Text fw={700} size="xl">
-                                        {formatPrice(
+                                        {formatPriceLabel(
                                             product.price * inBasket.count,
                                         )}
-                                        ₽
                                     </Text>
                                 </Group>
                             )}
                             {!inBasket && (
                                 <Text fw={700} size="xl">
-                                    {formatPrice(product.price)}₽
+                                    {formatPriceLabel(product.price)}
                                 </Text>
                             )}
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { formatPrice } from "@/helpers";
+import { formatPriceLabel } from "@/helpers";
 import { useUserStore } from "@/store/user";
 import { IProductCard } from "@/types";
 import { Card, Badge, Button, Text, Stack, Center } from "@mantine/core";
@@ -72,7 +72,7 @@ export const ProductCard = ({
                     mt="auto"
                     variant={inBasket ? "outline" : "filled"}
                 >
-                    {formatPrice(price)}₽
+                    {formatPriceLabel(price)}
                 </Button>
             </Stack>
         </Card>

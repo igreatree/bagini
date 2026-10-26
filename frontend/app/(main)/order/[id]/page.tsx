@@ -101,7 +101,10 @@ export default function OrderPage() {
                     {view.icon}
                     <Title order={3}>{view.title}</Title>
                     <Text c="dimmed">
-                        Заказ №{order.id} на сумму {formatPrice(order.total)} ₽
+                        Заказ №{order.id}{" "}
+                        {order.total > 0
+                            ? `на сумму ${formatPrice(order.total)} ₽`
+                            : "· Бесплатно"}
                     </Text>
                     <Text size="sm" c="dimmed">
                         {view.text}

@@ -35,6 +35,7 @@ interface BasketItem {
 }
 
 function formatPrice(value: number) {
+    if (value === 0) return "Бесплатно";
     return new Intl.NumberFormat("ru-RU", {
         style: "currency",
         currency: "RUB",

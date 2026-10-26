@@ -18,7 +18,7 @@ import { IconReceiptOff } from "@tabler/icons-react";
 import Link from "next/link";
 import { getOrders } from "@/api/order";
 import { orderStatusColors, orderStatusLabels } from "@/constants";
-import { formatPrice } from "@/helpers";
+import { formatPrice, formatPriceLabel } from "@/helpers";
 import { useUserStore } from "@/store/user";
 import { OrderType } from "@/types";
 
@@ -123,10 +123,10 @@ export default function OrdersPage() {
                                         {item.productName} × {item.quantity}
                                     </Text>
                                     <Text size="sm" style={{ flexShrink: 0 }}>
-                                        {formatPrice(
+                                        {formatPriceLabel(
                                             item.price * item.quantity,
-                                        )}{" "}
-                                        ₽
+                                            " ",
+                                        )}
                                     </Text>
                                 </Group>
                             ))}
@@ -138,7 +138,7 @@ export default function OrdersPage() {
                                     ? `Доставка: ${formatPrice(order.deliveryPrice)} ₽`
                                     : ""}
                             </Text>
-                            <Text fw={700}>{formatPrice(order.total)} ₽</Text>
+                            <Text fw={700}>{formatPriceLabel(order.total, " ")}</Text>
                         </Group>
                         {order.status === "pending" && order.paymentUrl && (
                             <Button
