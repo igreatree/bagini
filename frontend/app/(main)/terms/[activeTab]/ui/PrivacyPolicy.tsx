@@ -113,7 +113,7 @@ export const PrivacyPolicy = () => {
 
                                     <Anchor
                                         href="mailto:bagini.help@yandex.ru"
-                                        c="pink"
+                                        c="blue"
                                     >
                                         bagini.help@yandex.ru
                                     </Anchor>
@@ -299,7 +299,7 @@ export const PrivacyPolicy = () => {
                                 уведомление на{" "}
                                 <Anchor
                                     href="mailto:bagini.help@yandex.ru"
-                                    c="pink"
+                                    c="blue"
                                 >
                                     bagini.help@yandex.ru
                                 </Anchor>{" "}

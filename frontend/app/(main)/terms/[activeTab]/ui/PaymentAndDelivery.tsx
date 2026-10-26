@@ -300,7 +300,7 @@ export const PaymentAndDelivery = () => {
 
                                     <Anchor
                                         href="mailto:bagini.help@yandex.ru"
-                                        c="pink"
+                                        c="blue"
                                     >
                                         bagini.help@yandex.ru
                                     </Anchor>

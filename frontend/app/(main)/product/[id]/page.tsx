@@ -155,7 +155,7 @@ export default function ProductPage() {
                                             style={{
                                                 borderColor:
                                                     activeImage === index
-                                                        ? "var(--mantine-color-pink-5)"
+                                                        ? "var(--mantine-color-blue-5)"
                                                         : undefined,
                                                 borderWidth:
                                                     activeImage === index
@@ -372,7 +372,7 @@ export default function ProductPage() {
 //                                             style={{
 //                                                 borderColor:
 //                                                     activeImage === index
-//                                                         ? "var(--mantine-color-pink-5)"
+//                                                         ? "var(--mantine-color-blue-5)"
 //                                                         : undefined,
 //                                                 borderWidth:
 //                                                     activeImage === index

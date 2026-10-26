@@ -189,7 +189,7 @@ export default function BasketPage() {
                     <Stack align="center" gap="xs">
                         <IconShoppingCartOff
                             size={48}
-                            color="var(--mantine-color-pink-filled)"
+                            color="var(--mantine-color-blue-filled)"
                         />
                         <Text size="lg" fw={500}>
                             Корзина пуста
@@ -210,7 +210,7 @@ export default function BasketPage() {
         <Container size="xl" p={0}>
             <Group mb="lg">
                 <Title order={2}>Корзина</Title>
-                <Title order={3} c="pink">
+                <Title order={3} c="blue">
                     ({totalCount})
                 </Title>
             </Group>
@@ -255,7 +255,7 @@ export default function BasketPage() {
                                         href={`/product/${product.id}`}
                                         style={{
                                             fontWeight: 500,
-                                            color: "var(--mantine-color-pink-filled)",
+                                            color: "var(--mantine-color-blue-filled)",
                                         }}
                                     >
                                         {product.productName}
@@ -343,7 +343,7 @@ export default function BasketPage() {
                             Ознакомлен и согласен с{" "}
                             <Anchor
                                 href="/terms/payment-and-delivery"
-                                c="pink"
+                                c="blue"
                                 size="xs"
                             >
                                 правилами оплаты и доставки
@@ -352,7 +352,7 @@ export default function BasketPage() {
                             <Anchor
                                 component={Link}
                                 href="/terms/return-policy"
-                                c="pink"
+                                c="blue"
                                 size="xs"
                             >
                                 правилами возврата и обмена товара

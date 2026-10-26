@@ -30,12 +30,7 @@ export default function ContactsPage() {
             <Stack gap="xl">
                 {/* Header */}
                 <Stack align="center" gap="sm">
-                    <Image
-                        alt="brand"
-                        width="200"
-                        height="90"
-                        src="/logo.svg"
-                    />
+                    <Image alt="brand" width={240} height={52} src="/logo.png" />
 
                     <Title order={1} ta="center">
                         Свяжитесь с нами
@@ -110,7 +105,7 @@ export default function ContactsPage() {
                             size="xl"
                             fw={600}
                             underline="never"
-                            c="pink"
+                            c="blue"
                         >
                             +7 968 017-94-38
                         </Anchor>
@@ -125,7 +120,7 @@ export default function ContactsPage() {
                             href="mailto:bagini.help@yandex.ru"
                             size="lg"
                             fw={600}
-                            c="pink"
+                            c="blue"
                         >
                             bagini.help@yandex.ru
                         </Anchor>

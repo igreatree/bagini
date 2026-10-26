@@ -47,7 +47,7 @@ export const CookieBanner = () => {
                     <Link
                         href="/terms/privacy-policy"
                         style={{
-                            color: "var(--mantine-color-pink-filled)",
+                            color: "var(--mantine-color-blue-filled)",
                         }}
                     >
                         Политикой обработки персональных данных
@@ -56,7 +56,7 @@ export const CookieBanner = () => {
                     <Link
                         href="/terms/cookie-consent"
                         style={{
-                            color: "var(--mantine-color-pink-filled)",
+                            color: "var(--mantine-color-blue-filled)",
                         }}
                     >
                         согласием на обработку cookie
@@ -69,7 +69,7 @@ export const CookieBanner = () => {
                     <Link
                         href="/terms/public-offer"
                         style={{
-                            color: "var(--mantine-color-pink-filled)",
+                            color: "var(--mantine-color-blue-filled)",
                         }}
                     >
                         Публичной оферте

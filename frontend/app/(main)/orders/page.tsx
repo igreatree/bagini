@@ -66,7 +66,7 @@ export default function OrdersPage() {
                 <Stack align="center" gap="xs">
                     <IconReceiptOff
                         size={48}
-                        color="var(--mantine-color-pink-filled)"
+                        color="var(--mantine-color-blue-filled)"
                     />
                     <Text size="lg" fw={500}>
                         Заказов пока нет
@@ -93,7 +93,7 @@ export default function OrdersPage() {
                                 component={Link}
                                 href={`/order/${order.id}`}
                                 fw={600}
-                                c="pink"
+                                c="blue"
                             >
                                 Заказ №{order.id}
                             </Anchor>

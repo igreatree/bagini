@@ -111,7 +111,7 @@ export default function AuthPage() {
                                     Ознакомлен и согласен с{" "}
                                     <Anchor
                                         href="/terms/privacy-policy"
-                                        c="pink"
+                                        c="blue"
                                         size="xs"
                                     >
                                         Политикой обработки персональных данных
@@ -120,7 +120,7 @@ export default function AuthPage() {
                                     <Anchor
                                         component={Link}
                                         href="/terms/cookie-consent"
-                                        c="pink"
+                                        c="blue"
                                         size="xs"
                                     >
                                         обработкой cookie и метрическими данными
@@ -129,7 +129,7 @@ export default function AuthPage() {
                                     <Anchor
                                         component={Link}
                                         href="/terms/public-offer"
-                                        c="pink"
+                                        c="blue"
                                         size="xs"
                                     >
                                         публичной офертой
@@ -182,7 +182,7 @@ export default function AuthPage() {
                                 style={{ justifyContent: "center" }}
                                 value={counter}
                                 fz="36px"
-                                c="pink"
+                                c="blue"
                             />
                         )}
                         {counter < 0 && (

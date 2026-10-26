@@ -1,7 +1,7 @@
 import { createTheme } from "@mantine/core";
 
 export const theme = createTheme({
-    primaryColor: "pink",
+    primaryColor: "blue",
 
     primaryShade: {
         light: 6,
@@ -11,13 +11,13 @@ export const theme = createTheme({
     components: {
         Button: {
             defaultProps: {
-                color: "pink",
+                color: "blue",
             },
         },
 
         Tabs: {
             defaultProps: {
-                color: "pink",
+                color: "blue",
             },
         },
 

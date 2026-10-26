@@ -38,13 +38,24 @@ export const Header = () => {
                             alignItems: "center",
                         }}
                     >
-                        <Image
-                            src="/logo.svg"
-                            alt="Bagini logo"
-                            width={90}
-                            height={37}
-                            loading="eager"
-                        />
+                        <Box hiddenFrom="sm">
+                            <Image
+                                src="/logo-square.png"
+                                alt="Bagini logo"
+                                width={44}
+                                height={44}
+                                loading="eager"
+                            />
+                        </Box>
+                        <Box visibleFrom="sm">
+                            <Image
+                                src="/logo.png"
+                                alt="Bagini logo"
+                                width={140}
+                                height={30}
+                                loading="eager"
+                            />
+                        </Box>
                     </Link>
                     <Group>
                         <Box visibleFrom="sm">
@@ -74,7 +85,7 @@ export const Header = () => {
                                             <Avatar
                                                 size={34}
                                                 radius="50%"
-                                                color="pink"
+                                                color="blue"
                                             >
                                                 {getInitials(user)}
                                             </Avatar>
@@ -108,7 +119,7 @@ export const Header = () => {
 
                                     <Menu.Divider />
                                     <Menu.Item
-                                        color="pink"
+                                        color="blue"
                                         onClick={logout}
                                         leftSection={<IconLogout size={14} />}
                                     >

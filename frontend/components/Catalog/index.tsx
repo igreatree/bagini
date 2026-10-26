@@ -17,10 +17,10 @@ export const Catalog = () => {
                 gap="sm"
                 className={styles.item}
             >
-                <ThemeIcon className={styles.image} size={100} bg="pink.0">
+                <ThemeIcon className={styles.image} size={100} bg="blue.0">
                     <IconSparkles2Filled
                         size={50}
-                        color="var(--mantine-color-pink-filled)"
+                        color="var(--mantine-color-blue-filled)"
                     />
                 </ThemeIcon>
                 <Text>Новинки</Text>
@@ -31,10 +31,10 @@ export const Catalog = () => {
                 gap="sm"
                 className={styles.item}
             >
-                <ThemeIcon className={styles.image} size={100} bg="pink.0">
+                <ThemeIcon className={styles.image} size={100} bg="blue.0">
                     <IconFlameFilled
                         size={50}
-                        color="var(--mantine-color-pink-filled)"
+                        color="var(--mantine-color-blue-filled)"
                     />
                 </ThemeIcon>
                 <Text>Популярное</Text>
@@ -45,10 +45,10 @@ export const Catalog = () => {
                 gap="sm"
                 className={styles.item}
             >
-                <ThemeIcon className={styles.image} size={100} bg="pink.0">
+                <ThemeIcon className={styles.image} size={100} bg="blue.0">
                     <IconVaccineBottle
                         size={50}
-                        color="var(--mantine-color-pink-filled)"
+                        color="var(--mantine-color-blue-filled)"
                     />
                 </ThemeIcon>
                 <Text>Все</Text>

@@ -251,7 +251,7 @@ export const PublicOffer = () => {
                                     href="mailto:bagini.help@yandex.ru"
                                     mt="xs"
                                     fw={600}
-                                    c="pink"
+                                    c="blue"
                                 >
                                     bagini.help@yandex.ru
                                 </Anchor>
@@ -325,7 +325,7 @@ export const PublicOffer = () => {
 
                                 <Anchor
                                     href="mailto:bagini.help@yandex.ru"
-                                    c="pink"
+                                    c="blue"
                                 >
                                     bagini.help@yandex.ru
                                 </Anchor>

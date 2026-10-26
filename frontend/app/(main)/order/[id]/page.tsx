@@ -77,7 +77,7 @@ export default function OrderPage() {
         },
         pending: {
             icon: (
-                <IconClock size={48} color="var(--mantine-color-pink-filled)" />
+                <IconClock size={48} color="var(--mantine-color-blue-filled)" />
             ),
             title: "Ожидаем оплату",
             text: "Если вы уже оплатили заказ, статус обновится в течение минуты.",

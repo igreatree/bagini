@@ -113,7 +113,7 @@ export default function ProfilePage() {
             <Paper withBorder shadow="sm" radius="md" p="xl">
                 <Group justify="space-between" align="flex-start" mb="lg">
                     <Group>
-                        <Avatar size={80} radius="xl" color="pink">
+                        <Avatar size={80} radius="xl" color="blue">
                             {getInitials(user)}
                         </Avatar>
                         <div>

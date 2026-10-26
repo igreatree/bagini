@@ -34,7 +34,7 @@ export const ProductCard = ({
             >
                 <Badge
                     style={{ position: "absolute", right: 10, top: 10 }}
-                    color={probe ? "pink" : "red"}
+                    color={probe ? "blue" : "red"}
                 >
                     {probe ? "Пробник" : "Новинка"}
                 </Badge>
@@ -69,6 +69,7 @@ export const ProductCard = ({
                     }}
                     leftSection={inBasket ? <IconCheck /> : <IconBasket />}
                     fullWidth
+                    px="xs"
                     mt="auto"
                     variant={inBasket ? "outline" : "filled"}
                 >

@@ -17,7 +17,7 @@ export const Footer = () => {
                             href="/terms/payment-and-delivery"
                             style={{
                                 textDecoration: "none",
-                                color: "var(--mantine-color-pink-filled)",
+                                color: "var(--mantine-color-blue-filled)",
                             }}
                         >
                             Оплата и доставка
@@ -26,7 +26,7 @@ export const Footer = () => {
                             href="/terms/return-policy"
                             style={{
                                 textDecoration: "none",
-                                color: "var(--mantine-color-pink-filled)",
+                                color: "var(--mantine-color-blue-filled)",
                             }}
                         >
                             Правила возврата и обмена товара
@@ -35,7 +35,7 @@ export const Footer = () => {
                             href="/terms/privacy-policy"
                             style={{
                                 textDecoration: "none",
-                                color: "var(--mantine-color-pink-filled)",
+                                color: "var(--mantine-color-blue-filled)",
                             }}
                         >
                             Политика обработки персональных данных
@@ -44,7 +44,7 @@ export const Footer = () => {
                             href="/terms/advertising-consent"
                             style={{
                                 textDecoration: "none",
-                                color: "var(--mantine-color-pink-filled)",
+                                color: "var(--mantine-color-blue-filled)",
                             }}
                         >
                             Согласие на получение рекламно-информационных
@@ -54,7 +54,7 @@ export const Footer = () => {
                             href="/terms/cookie-consent"
                             style={{
                                 textDecoration: "none",
-                                color: "var(--mantine-color-pink-filled)",
+                                color: "var(--mantine-color-blue-filled)",
                             }}
                         >
                             Согласие на обработку файлов cookie и метрических

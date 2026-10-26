@@ -263,7 +263,7 @@ export const PersonalDataConsent = () => {
                                 Направьте уведомление на{" "}
                                 <Anchor
                                     href="mailto:bagini.help@yandex.ru"
-                                    c="pink"
+                                    c="blue"
                                 >
                                     bagini.help@yandex.ru
                                 </Anchor>{" "}

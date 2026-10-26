@@ -16,6 +16,7 @@ import { IconCircleCheck, IconClock } from "@tabler/icons-react";
 import Link from "next/link";
 import { getProbePurchase } from "@/api/order";
 import { getProbes } from "@/api/product";
+import { ProbesBanner } from "@/components/ProbesBanner";
 import { ProductCard } from "@/components/ProductCard";
 import { useIsMobile } from "@/hooks";
 import { useUserStore } from "@/store/user";
@@ -89,7 +90,7 @@ export default function ProbesPage() {
                     <Stack align="center" gap="xs">
                         <Icon
                             size={48}
-                            color="var(--mantine-color-pink-filled)"
+                            color="var(--mantine-color-blue-filled)"
                         />
                         <Text size="lg" fw={500}>
                             {paid
@@ -148,6 +149,7 @@ export default function ProbesPage() {
     return (
         <Container w="100%" size="xl" p={0}>
             <Stack gap="md">
+                {!bought && <ProbesBanner />}
                 <Group align="baseline">
                     <Title order={2}>Пробники</Title>
                     <Text c="dimmed">Один пробник на аккаунт</Text>

@@ -76,10 +76,10 @@ export const HeaderMenu = (props: BurgerProps) => {
                 onClose={close}
                 title={
                     <Image
-                        src="/logo.svg"
+                        src="/logo.png"
                         alt="Bagini logo"
-                        width={90}
-                        height={37}
+                        width={140}
+                        height={30}
                         loading="eager"
                     />
                 }
