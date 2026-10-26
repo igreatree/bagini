@@ -23,3 +23,5 @@ export const orderStatusColors: Record<OrderStatusType, string> = {
     paid: "green",
     cancelled: "red",
 };
+
+export const YANDEX_METRIKA_ID = 113783831;

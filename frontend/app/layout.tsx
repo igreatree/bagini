@@ -5,6 +5,7 @@ import { Inter } from "next/font/google";
 import { ColorSchemeScript, MantineProvider } from "@mantine/core";
 import { theme } from "./theme";
 import Grainient from "@/components/Background";
+import { YandexMetrika } from "@/components/YandexMetrika";
 import { Notifications } from "@mantine/notifications";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -25,6 +26,7 @@ export default function RootLayout({
                 <ColorSchemeScript />
             </head>
             <body className={inter.className}>
+                <YandexMetrika />
                 <Grainient
                     color1="#FF9FFC"
                     color2="#ffffff"
