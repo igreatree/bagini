@@ -24,7 +24,7 @@ import type { IProduct, ProbePurchaseType } from "@/types";
 
 export default function ProbesPage() {
     const isMobile = useIsMobile();
-    const { user } = useUserStore();
+    const { user, basket } = useUserStore();
     // undefined — ещё грузим, null — не удалось загрузить
     const [probes, setProbes] = useState<IProduct[] | null | undefined>();
     const [attempt, setAttempt] = useState(0);
@@ -57,6 +57,11 @@ export default function ProbesPage() {
             actual = false;
         };
     }, [user]);
+
+    // Пробник один на заказ: пока один выбран, остальные недоступны
+    const probeSelected =
+        probes?.some((probe) => basket.some((item) => item.id === probe.id)) ??
+        false;
 
     const purchaseLoading = !!user && purchase?.userId !== user.id;
     const bought = user && purchase?.userId === user.id ? purchase.value : null;
@@ -140,7 +145,11 @@ export default function ProbesPage() {
         return (
             <SimpleGrid {...gridProps}>
                 {probes.map((product) => (
-                    <ProductCard key={product.id} {...product} />
+                    <ProductCard
+                        key={product.id}
+                        {...product}
+                        disabled={probeSelected}
+                    />
                 ))}
             </SimpleGrid>
         );

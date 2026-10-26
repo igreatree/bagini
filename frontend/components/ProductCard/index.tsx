@@ -14,7 +14,8 @@ export const ProductCard = ({
     price,
     images,
     probe,
-}: IProductCard) => {
+    disabled,
+}: IProductCard & { disabled?: boolean }) => {
     const { basket, updateBasket } = useUserStore();
     const inBasket = basket.find((item) => item.id === id);
     const router = useRouter();
@@ -24,7 +25,11 @@ export const ProductCard = ({
             shadow="sm"
             padding={0}
             bg="#ffffff9c"
-            onClick={() => router.push(`/product/${id}`)}
+            onClick={(e) => {
+                // Клик по кнопке, в том числе недоступной, карточку не открывает
+                if ((e.target as HTMLElement).closest("button")) return;
+                router.push(`/product/${id}`);
+            }}
             style={{ display: "flex", flexDirection: "column" }}
         >
             <Card.Section
@@ -68,6 +73,8 @@ export const ProductCard = ({
                         updateBasket(id);
                     }}
                     leftSection={inBasket ? <IconCheck /> : <IconBasket />}
+                    // Товар из корзины всегда можно убрать, даже когда остальные недоступны
+                    disabled={disabled && !inBasket}
                     fullWidth
                     px="xs"
                     mt="auto"
