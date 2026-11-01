@@ -40,7 +40,8 @@ services:
             - "6379:6379"
         volumes:
             - redis_data:/data
-        command: redis-server --appendonly yes
+        # Пароль берётся из .env и тот же REDIS_PASSWORD читает бэкенд; без него Redis без пароля
+        command: redis-server --appendonly yes ${REDIS_PASSWORD:+--requirepass ${REDIS_PASSWORD}}
         restart: always
 
     backend:
