@@ -15,12 +15,14 @@ export const roleColors: Record<UserRoleType, string> = {
 export const orderStatusLabels: Record<OrderStatusType, string> = {
     pending: "Ожидает оплаты",
     paid: "Оплачен",
+    confirmed: "Оформлен",
     cancelled: "Не оплачен",
 };
 
 export const orderStatusColors: Record<OrderStatusType, string> = {
     pending: "yellow",
     paid: "green",
+    confirmed: "green",
     cancelled: "red",
 };
 

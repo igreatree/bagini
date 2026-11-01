@@ -399,7 +399,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   User: 'User',
   Order: 'Order',
-  OrderItem: 'OrderItem'
+  OrderItem: 'OrderItem',
+  DeliveryPoint: 'DeliveryPoint'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -415,7 +416,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "order" | "orderItem"
+    modelProps: "user" | "order" | "orderItem" | "deliveryPoint"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -641,6 +642,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    DeliveryPoint: {
+      payload: Prisma.$DeliveryPointPayload<ExtArgs>
+      fields: Prisma.DeliveryPointFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.DeliveryPointFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryPointPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.DeliveryPointFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryPointPayload>
+        }
+        findFirst: {
+          args: Prisma.DeliveryPointFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryPointPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.DeliveryPointFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryPointPayload>
+        }
+        findMany: {
+          args: Prisma.DeliveryPointFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryPointPayload>[]
+        }
+        create: {
+          args: Prisma.DeliveryPointCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryPointPayload>
+        }
+        createMany: {
+          args: Prisma.DeliveryPointCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.DeliveryPointCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryPointPayload>[]
+        }
+        delete: {
+          args: Prisma.DeliveryPointDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryPointPayload>
+        }
+        update: {
+          args: Prisma.DeliveryPointUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryPointPayload>
+        }
+        deleteMany: {
+          args: Prisma.DeliveryPointDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.DeliveryPointUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.DeliveryPointUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryPointPayload>[]
+        }
+        upsert: {
+          args: Prisma.DeliveryPointUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeliveryPointPayload>
+        }
+        aggregate: {
+          args: Prisma.DeliveryPointAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateDeliveryPoint>
+        }
+        groupBy: {
+          args: Prisma.DeliveryPointGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DeliveryPointGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.DeliveryPointCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DeliveryPointCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -711,6 +786,8 @@ export const OrderScalarFieldEnum = {
   address: 'address',
   postalCode: 'postalCode',
   comment: 'comment',
+  deliveryPointId: 'deliveryPointId',
+  ozonDeliveryNumber: 'ozonDeliveryNumber',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -729,6 +806,21 @@ export const OrderItemScalarFieldEnum = {
 } as const
 
 export type OrderItemScalarFieldEnum = (typeof OrderItemScalarFieldEnum)[keyof typeof OrderItemScalarFieldEnum]
+
+
+export const DeliveryPointScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  address: 'address',
+  type: 'type',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  isActive: 'isActive',
+  shipmentMethodIds: 'shipmentMethodIds',
+  syncedAt: 'syncedAt'
+} as const
+
+export type DeliveryPointScalarFieldEnum = (typeof DeliveryPointScalarFieldEnum)[keyof typeof DeliveryPointScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -842,6 +934,13 @@ export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, '
  * Reference to a field of type 'Float[]'
  */
 export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 /**
@@ -998,6 +1097,7 @@ export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   order?: Prisma.OrderOmit
   orderItem?: Prisma.OrderItemOmit
+  deliveryPoint?: Prisma.DeliveryPointOmit
 }
 
 /* Types for Logging */

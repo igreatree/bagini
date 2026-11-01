@@ -30,8 +30,7 @@ export class CatalogController {
         }
     }
 
-    // Пробник можно купить в одном экземпляре и только пока он есть в таблице.
-    // Цена пробника — из таблицы, цена на Ozon для него не важна.
+    // Пробник бесплатный, его можно получить в одном экземпляре и только пока он есть в таблице
     private markProbes<
         T extends { offerId: string; stock: number; price: number },
     >(products: T[], items: Map<string, SheetItem>) {
@@ -44,7 +43,7 @@ export class CatalogController {
                     ...product,
                     probe: true,
                     stock: 1,
-                    price: sheetItem.price ?? product.price,
+                    price: 0,
                 },
             ];
         });

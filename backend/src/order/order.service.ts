@@ -10,6 +10,8 @@ import type { OrderStatus } from "../../generated/prisma/enums";
 import { CreateOrderDto, OrderItemDto } from "./dto/create-order.dto";
 import { CatalogService } from "../catalog/catalog.service";
 import { SheetService } from "../sheet/sheet.service";
+import { OzonDeliveryService } from "../delivery/ozon-delivery.service";
+import { DeliveryPointService } from "../delivery/delivery-point.service";
 
 // Статусы заказа на стороне Ozon, которые меняют статус заказа в магазине.
 // Остальные (например, STATUS_PAYMENT_PENDING) оставляют заказ как есть.
@@ -28,6 +30,8 @@ export class OrderService {
         private ozon: OzonService,
         private catalog: CatalogService,
         private sheet: SheetService,
+        private delivery: OzonDeliveryService,
+        private points: DeliveryPointService,
     ) {}
 
     // Цены берём из каталога Ozon на сервере, клиентским ценам доверять нельзя
@@ -61,7 +65,7 @@ export class OrderService {
                 );
             }
 
-            // Остаток и цена пробника ведутся в таблице, остаток и цена на Ozon для него не важны
+            // Остаток пробника ведётся в таблице, остаток на Ozon для него не важен
             const probe = probeItems.get(product.offerId);
             const isProbe = probe !== undefined;
             if (!isProbe && quantity > product.stock) {
@@ -82,7 +86,8 @@ export class OrderService {
             return {
                 productId,
                 productName: product.productName,
-                price: probe?.price ?? product.price,
+                // Пробники бесплатные, цену Ozon и таблицы не используем
+                price: isProbe ? 0 : product.price,
                 quantity,
                 probeOfferId: isProbe ? product.offerId : undefined,
             };
@@ -91,6 +96,12 @@ export class OrderService {
         if (items.filter((item) => item.probeOfferId).length > 1) {
             throw new BadRequestException(
                 "В заказе может быть только один пробник",
+            );
+        }
+        // Бесплатный пробник уходит отдельной посылкой Ozon Доставки, без оплаты
+        if (items.length > 1 && items.some((item) => item.probeOfferId)) {
+            throw new BadRequestException(
+                "Пробник оформляется отдельным заказом",
             );
         }
 
@@ -117,41 +128,19 @@ export class OrderService {
         );
 
         const probe = items.find((item) => item.probeOfferId);
+        if (probe) return this.createProbeOrder(userId, dto, probe);
 
-        const order = await this.prisma.order
-            .create({
-                data: {
-                    userId,
-                    itemsTotal,
-                    deliveryPrice: 0,
-                    total,
-                    comment: dto.comment,
-                    probeUserId: probe ? userId : undefined,
-                    items: { create: items },
-                },
-                include: { items: true },
-            })
-            .catch((error) => {
-                // Уникальный probeUserId: у аккаунта уже есть заказ с пробником
-                if (probe && error?.code === "P2002") {
-                    throw new BadRequestException(
-                        "Пробник можно купить только один раз на аккаунт",
-                    );
-                }
-                throw error;
-            });
-
-        if (probe) {
-            try {
-                await this.sheet.reserve([
-                    { offerId: probe.probeOfferId!, quantity: probe.quantity },
-                ]);
-            } catch (error) {
-                // Остаток не списан, возвращать в таблицу нечего
-                await this.cancel(order.id, { release: false });
-                throw error;
-            }
-        }
+        const order = await this.prisma.order.create({
+            data: {
+                userId,
+                itemsTotal,
+                deliveryPrice: 0,
+                total,
+                comment: dto.comment,
+                items: { create: items },
+            },
+            include: { items: true },
+        });
 
         const user = await this.prisma.user.findUnique({
             where: { id: userId },
@@ -178,6 +167,110 @@ export class OrderService {
             await this.cancel(order.id);
             throw error;
         }
+    }
+
+    // Пробник бесплатный: без эквайринга, посылка сразу уходит в Ozon Доставку
+    // на выбранный покупателем пункт выдачи
+    private async createProbeOrder(
+        userId: number,
+        dto: CreateOrderDto,
+        probe: {
+            productId: string;
+            productName: string;
+            price: number;
+            quantity: number;
+            probeOfferId?: string;
+        },
+    ) {
+        if (!dto.deliveryPointId) {
+            throw new BadRequestException("Выберите пункт выдачи Ozon");
+        }
+        const point = await this.points.findAvailable(dto.deliveryPointId);
+        if (!point) {
+            throw new BadRequestException(
+                "Пункт выдачи недоступен, выберите другой",
+            );
+        }
+
+        const user = await this.prisma.user.findUniqueOrThrow({
+            where: { id: userId },
+            select: { phone: true, name: true, lastName: true },
+        });
+        // Ozon Доставка выдаёт посылки только зарегистрированным в Ozon получателям
+        if (!(await this.delivery.canDeliverTo(user.phone))) {
+            throw new BadRequestException(
+                "Номер телефона не зарегистрирован в Ozon. Зарегистрируйтесь в Ozon с этим номером и оформите заказ снова",
+            );
+        }
+        if (!(await this.delivery.isPointAvailable(point.id))) {
+            throw new BadRequestException(
+                "Пункт выдачи сейчас не принимает посылки, выберите другой",
+            );
+        }
+
+        const recipientName =
+            [user.name, user.lastName].filter(Boolean).join(" ") || undefined;
+        const order = await this.prisma.order
+            .create({
+                data: {
+                    userId,
+                    itemsTotal: 0,
+                    deliveryPrice: 0,
+                    total: 0,
+                    comment: dto.comment,
+                    probeUserId: userId,
+                    recipientName,
+                    address: point.address,
+                    deliveryPointId: point.id,
+                    items: { create: [probe] },
+                },
+                include: { items: true },
+            })
+            .catch((error) => {
+                // Уникальный probeUserId: у аккаунта уже есть заказ с пробником
+                if (error?.code === "P2002") {
+                    throw new BadRequestException(
+                        "Пробник можно купить только один раз на аккаунт",
+                    );
+                }
+                throw error;
+            });
+
+        try {
+            await this.sheet.reserve([
+                { offerId: probe.probeOfferId!, quantity: probe.quantity },
+            ]);
+        } catch (error) {
+            // Остаток не списан, возвращать в таблицу нечего
+            await this.cancel(order.id, { release: false });
+            throw error;
+        }
+
+        let orderNumber: string;
+        try {
+            ({ orderNumber } = await this.delivery.createOrder({
+                id: order.id,
+                extId: order.extId,
+                phone: user.phone,
+                recipientName,
+                deliveryPointId: point.id,
+                description: `Пробник: ${probe.productName}`,
+            }));
+        } catch (error) {
+            // Ключ идемпотентности уже сработал при повторе; если заказ в Ozon всё же есть, его найдут по extId
+            this.logger.error(
+                `Заказ ${order.id} (${order.extId}) не создан в Ozon Доставке`,
+            );
+            await this.cancel(order.id);
+            throw error;
+        }
+
+        // Отправление уже создано, поэтому заказ после этого не отменяем
+        return this.prisma.order.update({
+            where: { id: order.id },
+            data: { status: "confirmed", ozonDeliveryNumber: orderNumber },
+            include: { items: true },
+        });
     }
 
     // Пробник текущего аккаунта: неотменённый заказ, который занимает лимит

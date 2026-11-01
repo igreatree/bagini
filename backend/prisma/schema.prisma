@@ -33,6 +33,8 @@ model User {
 enum OrderStatus {
     pending
     paid
+    // Бесплатный заказ (пробник): оплаты нет, отправление создано в Ozon Доставке
+    confirmed
     cancelled
 }
 
@@ -59,12 +61,17 @@ model Order {
     deliveryPrice    Int
     total            Int
 
-    // Адрес и получателя выбирает покупатель на странице оплаты Ozon
+    // Адрес и получателя выбирает покупатель на странице оплаты Ozon.
+    // У бесплатного заказа с пробником адрес — пункт выдачи Ozon, который выбрали на сайте.
     recipientName    String?
     city             String?
     address          String?
     postalCode       String?
     comment          String?
+
+    // Пункт выдачи Ozon Доставки и номер заказа в ней (только для заказа с пробником)
+    deliveryPointId  Int?
+    ozonDeliveryNumber String?          @unique
 
     items            OrderItem[]
 
@@ -84,4 +91,19 @@ model OrderItem {
 
     // Артикул Ozon, если позиция — пробник (остаток списан в таблице)
     probeOfferId     String?
+}
+
+// Справочник пунктов выдачи Ozon Доставки: API отдаёт его только целиком,
+// поиск по адресу для покупателя делаем по этой копии
+model DeliveryPoint {
+    id               Int                @id
+    name             String
+    address          String
+    type             String?
+    latitude         Float?
+    longitude        Float?
+    isActive         Boolean
+    shipmentMethodIds Int[]
+
+    syncedAt         DateTime
 }

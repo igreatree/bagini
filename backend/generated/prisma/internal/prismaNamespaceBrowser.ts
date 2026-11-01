@@ -53,7 +53,8 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   User: 'User',
   Order: 'Order',
-  OrderItem: 'OrderItem'
+  OrderItem: 'OrderItem',
+  DeliveryPoint: 'DeliveryPoint'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -103,6 +104,8 @@ export const OrderScalarFieldEnum = {
   address: 'address',
   postalCode: 'postalCode',
   comment: 'comment',
+  deliveryPointId: 'deliveryPointId',
+  ozonDeliveryNumber: 'ozonDeliveryNumber',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -121,6 +124,21 @@ export const OrderItemScalarFieldEnum = {
 } as const
 
 export type OrderItemScalarFieldEnum = (typeof OrderItemScalarFieldEnum)[keyof typeof OrderItemScalarFieldEnum]
+
+
+export const DeliveryPointScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  address: 'address',
+  type: 'type',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  isActive: 'isActive',
+  shipmentMethodIds: 'shipmentMethodIds',
+  syncedAt: 'syncedAt'
+} as const
+
+export type DeliveryPointScalarFieldEnum = (typeof DeliveryPointScalarFieldEnum)[keyof typeof DeliveryPointScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -53,9 +53,12 @@ export type ProductsPageType = {
 export type CreateOrderType = {
     items: { productId: string; quantity: number }[];
     comment?: string;
+    // Пункт выдачи Ozon: обязателен для заказа с пробником
+    deliveryPointId?: number;
 };
 
-export type OrderStatusType = "pending" | "paid" | "cancelled";
+// confirmed — бесплатный заказ (пробник): оплаты нет, посылка передана в Ozon Доставку
+export type OrderStatusType = "pending" | "paid" | "confirmed" | "cancelled";
 
 export type OrderItemType = {
     id: number;
@@ -74,6 +77,15 @@ export type OrderType = {
     deliveryPrice: number;
     total: number;
     paymentUrl: string | null;
+    // Пункт выдачи, если адрес выбирали на сайте (заказ с пробником)
+    address: string | null;
+};
+
+export type DeliveryPointType = {
+    id: number;
+    name: string;
+    address: string;
+    type: string | null;
 };
 
 // Заказ с пробником, который занимает лимит аккаунта (отменённые не учитываются)

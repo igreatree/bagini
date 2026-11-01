@@ -36,4 +36,10 @@ export class CreateOrderDto extends CalculateOrderDto {
     @IsString()
     @Length(0, 500)
     comment?: string;
+
+    // Пункт выдачи Ozon: нужен заказу с пробником, у остальных адрес выбирают при оплате
+    @IsOptional()
+    @IsInt()
+    @Min(1)
+    deliveryPointId?: number;
 }

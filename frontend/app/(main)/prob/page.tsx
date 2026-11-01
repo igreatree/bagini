@@ -88,7 +88,8 @@ export default function ProbesPage() {
 
         // Один пробник на аккаунт: после покупки остальные недоступны
         if (bought) {
-            const paid = bought.status === "paid";
+            const paid =
+                bought.status === "paid" || bought.status === "confirmed";
             const Icon = paid ? IconCircleCheck : IconClock;
             return (
                 <Center py={60}>
@@ -99,12 +100,12 @@ export default function ProbesPage() {
                         />
                         <Text size="lg" fw={500}>
                             {paid
-                                ? "Вы уже приобрели пробник"
+                                ? "Вы уже заказали пробник"
                                 : "Пробник ждёт оплаты"}
                         </Text>
                         <Text size="sm" c="dimmed" ta="center">
                             {paid
-                                ? "Пробник можно купить один раз на аккаунт"
+                                ? "Пробник можно получить один раз на аккаунт"
                                 : "Оплатите заказ, чтобы получить пробник"}
                         </Text>
                         <Button component={Link} href={`/order/${bought.id}`}>

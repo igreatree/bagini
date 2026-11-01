@@ -38,7 +38,10 @@ export default function OrderPage() {
             if (!actual) return;
             if ("order" in res) {
                 setOrder(res.order);
-                if (res.order.status === "paid") {
+                if (
+                    res.order.status === "paid" ||
+                    res.order.status === "confirmed"
+                ) {
                     clearBasket();
                     return;
                 }
@@ -75,6 +78,16 @@ export default function OrderPage() {
             title: "Заказ оплачен",
             text: "Спасибо за покупку! Мы свяжемся с вами по вопросам доставки.",
         },
+        confirmed: {
+            icon: (
+                <IconCircleCheck
+                    size={48}
+                    color="var(--mantine-color-green-filled)"
+                />
+            ),
+            title: "Заказ оформлен",
+            text: "Пробник передан в Ozon Доставку. Когда посылка приедет в пункт выдачи, придёт уведомление в приложении Ozon.",
+        },
         pending: {
             icon: (
                 <IconClock size={48} color="var(--mantine-color-blue-filled)" />
@@ -109,6 +122,9 @@ export default function OrderPage() {
                     <Text size="sm" c="dimmed">
                         {view.text}
                     </Text>
+                    {order.address && (
+                        <Text size="sm">Пункт выдачи: {order.address}</Text>
+                    )}
                     {order.status === "pending" && order.paymentUrl && (
                         <Button component="a" href={order.paymentUrl}>
                             Перейти к оплате

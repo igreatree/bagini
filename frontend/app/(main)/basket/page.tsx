@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+    Alert,
     Container,
     Paper,
     Group,
@@ -19,12 +20,18 @@ import {
     Textarea,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { IconTrash, IconShoppingCartOff, IconPhoto } from "@tabler/icons-react";
+import {
+    IconTrash,
+    IconShoppingCartOff,
+    IconPhoto,
+    IconInfoCircle,
+} from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { useUserStore } from "@/store/user";
 import { createOrder } from "@/api/order";
 import { getProductsByIds } from "@/api/product";
-import { IProduct } from "@/types";
+import { DeliveryPointSelect } from "@/components/DeliveryPointSelect";
+import { DeliveryPointType, IProduct } from "@/types";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -54,6 +61,7 @@ export default function BasketPage() {
     } = useUserStore();
     const [products, setProducts] = useState<IProduct[] | null>(null);
     const [checkoutLoading, setCheckoutLoading] = useState(false);
+    const [point, setPoint] = useState<DeliveryPointType | null>(null);
     const router = useRouter();
 
     const form = useForm({
@@ -120,6 +128,11 @@ export default function BasketPage() {
         0,
     );
 
+    // Пробник бесплатный и уходит в Ozon Доставку без оплаты, поэтому оформляется
+    // отдельным заказом с выбором пункта выдачи на сайте
+    const hasProbe = items.some(({ product }) => product.probe);
+    const probeMixed = hasProbe && items.length > 1;
+
     const totalCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
     const handleQuantityChange = (id: string, value: number | string) => {
@@ -146,13 +159,19 @@ export default function BasketPage() {
                     quantity,
                 })),
                 comment: values.comment.trim() || undefined,
+                deliveryPointId: hasProbe ? point?.id : undefined,
             });
-            if ("order" in res && res.order.paymentUrl) {
+            if ("order" in res) {
                 redirecting = true;
-                window.location.href = res.order.paymentUrl;
+                if (res.order.paymentUrl) {
+                    window.location.href = res.order.paymentUrl;
+                } else {
+                    // Бесплатный заказ оплаты не требует
+                    router.push(`/order/${res.order.id}`);
+                }
             }
         } finally {
-            // Во время перехода на страницу оплаты Ozon кнопка остаётся заблокированной
+            // Во время перехода на страницу оплаты Ozon или заказа кнопка остаётся заблокированной
             if (!redirecting) setCheckoutLoading(false);
         }
     };
@@ -304,7 +323,22 @@ export default function BasketPage() {
 
             <Divider my="lg" />
 
+            {probeMixed && (
+                <Alert
+                    color="yellow"
+                    icon={<IconInfoCircle />}
+                    radius="md"
+                    mb="md"
+                >
+                    Пробник оформляется отдельным заказом. Уберите его из
+                    корзины или оформите пробник без других товаров.
+                </Alert>
+            )}
+
             <Paper withBorder radius="md" p="lg" mb="md">
+                {hasProbe && user && (
+                    <DeliveryPointSelect value={point} onChange={setPoint} />
+                )}
                 <Textarea
                     label="Комментарий к заказу"
                     placeholder="Необязательно"
@@ -314,7 +348,9 @@ export default function BasketPage() {
                     {...form.getInputProps("comment")}
                 />
                 <Text size="xs" c="dimmed" mt="xs">
-                    Адрес и способ доставки вы выберете на странице оплаты
+                    {hasProbe
+                        ? "Пробник бесплатно доставит Ozon. Получить посылку можно в приложении Ozon, номер телефона должен совпадать с номером на сайте"
+                        : "Адрес и способ доставки вы выберете на странице оплаты"}
                 </Text>
             </Paper>
 
@@ -325,7 +361,9 @@ export default function BasketPage() {
                 </Group>
                 <Group justify="space-between" mb={4}>
                     <Text c="dimmed">Доставка</Text>
-                    <Text>Рассчитывается при оплате</Text>
+                    <Text>
+                        {hasProbe ? "Бесплатно" : "Рассчитывается при оплате"}
+                    </Text>
                 </Group>
                 <Group justify="space-between" mb="md" mt="md">
                     <Text size="lg">Итого за товары</Text>
@@ -364,7 +402,11 @@ export default function BasketPage() {
                     fullWidth
                     size="md"
                     loading={checkoutLoading}
-                    disabled={!buyTermsApplied}
+                    disabled={
+                        !buyTermsApplied ||
+                        probeMixed ||
+                        (hasProbe && !!user && !point)
+                    }
                     onClick={() => {
                         if (!user) {
                             router.push("/auth");
