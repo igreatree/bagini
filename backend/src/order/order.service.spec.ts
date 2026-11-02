@@ -39,21 +39,17 @@ describe("OrderService.calculate", () => {
                 findByIds,
             } as any,
             {
-                getItems: jest
-                    .fn()
-                    .mockResolvedValue(
-                        new Map(
-                            Object.entries(probeStocks).map(
-                                ([offerId, stock]) => [
-                                    offerId,
-                                    {
-                                        stock,
-                                        price: probePrices[offerId] ?? null,
-                                    },
-                                ],
-                            ),
-                        ),
+                getItems: jest.fn().mockResolvedValue(
+                    new Map(
+                        Object.entries(probeStocks).map(([offerId, stock]) => [
+                            offerId,
+                            {
+                                stock,
+                                price: probePrices[offerId] ?? null,
+                            },
+                        ]),
                     ),
+                ),
             } as any,
             {} as any,
             {} as any,
@@ -227,6 +223,8 @@ describe("OrderService.create", () => {
         overrides: {
             create?: jest.Mock;
             createDeliveryOrder?: jest.Mock;
+            approvePosting?: jest.Mock;
+            cancelPosting?: jest.Mock;
             reserve?: jest.Mock;
             canDeliverTo?: boolean;
             pointAvailable?: boolean;
@@ -267,20 +265,27 @@ describe("OrderService.create", () => {
                 .mockResolvedValue(overrides.pointAvailable ?? true),
             createOrder:
                 overrides.createDeliveryOrder ??
-                jest.fn().mockResolvedValue({ orderNumber: "OZ-1" }),
+                jest.fn().mockResolvedValue({
+                    orderNumber: "OZ-1",
+                    postingNumber: "POST-1",
+                }),
+            approvePosting:
+                overrides.approvePosting ??
+                jest.fn().mockResolvedValue(undefined),
+            cancelPosting:
+                overrides.cancelPosting ??
+                jest.fn().mockResolvedValue(undefined),
         };
         const points = {
-            findAvailable: jest
-                .fn()
-                .mockResolvedValue(
-                    overrides.point === undefined
-                        ? {
-                              id: 555,
-                              name: "Ozon",
-                              address: "Москва, Тверская 1",
-                          }
-                        : overrides.point,
-                ),
+            findAvailable: jest.fn().mockResolvedValue(
+                overrides.point === undefined
+                    ? {
+                          id: 555,
+                          name: "Ozon",
+                          address: "Москва, Тверская 1",
+                      }
+                    : overrides.point,
+            ),
         };
         const sheet = {
             getItems: jest
@@ -342,9 +347,11 @@ describe("OrderService.create", () => {
                     data: {
                         status: "confirmed",
                         ozonDeliveryNumber: "OZ-1",
+                        ozonPostingNumber: "POST-1",
                     },
                 }),
             );
+            expect(delivery.approvePosting).toHaveBeenCalledWith("POST-1");
             expect(ozon.createOrder).not.toHaveBeenCalled();
             expect(sheet.release).not.toHaveBeenCalled();
         });
@@ -442,6 +449,41 @@ describe("OrderService.create", () => {
 
             await expect(service.create(42, probeDto)).rejects.toThrow("ozon");
             expect(sheet.release).not.toHaveBeenCalled();
+        });
+
+        it("removes the posting and returns the probe when Ozon refuses to confirm it", async () => {
+            const { service, prisma, sheet, delivery } = build({
+                approvePosting: jest
+                    .fn()
+                    .mockRejectedValue(new Error("NotEnoughBalance")),
+            });
+
+            await expect(service.create(42, probeDto)).rejects.toThrow(
+                "NotEnoughBalance",
+            );
+            expect(delivery.cancelPosting).toHaveBeenCalledWith("POST-1");
+            expect(prisma.order.updateMany).toHaveBeenCalledWith({
+                where: { id: 7, status: "pending" },
+                data: { status: "cancelled", probeUserId: null },
+            });
+            expect(sheet.release).toHaveBeenCalledWith([
+                { offerId: "offer-2", quantity: 1 },
+            ]);
+            expect(prisma.order.update).not.toHaveBeenCalled();
+        });
+
+        it("still frees the probe when the unconfirmed posting cannot be cancelled", async () => {
+            const { service, sheet } = build({
+                approvePosting: jest
+                    .fn()
+                    .mockRejectedValue(new Error("NotEnoughBalance")),
+                cancelPosting: jest.fn().mockRejectedValue(new Error("down")),
+            });
+
+            await expect(service.create(42, probeDto)).rejects.toThrow(
+                "NotEnoughBalance",
+            );
+            expect(sheet.release).toHaveBeenCalled();
         });
 
         it("keeps the order when it cannot be saved after the parcel was created", async () => {

@@ -74,3 +74,5 @@ out/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+ozon-delivery.html

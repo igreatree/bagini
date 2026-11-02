@@ -246,16 +246,16 @@ export class OrderService {
             throw error;
         }
 
-        let orderNumber: string;
+        let shipment: { orderNumber: string; postingNumber: string };
         try {
-            ({ orderNumber } = await this.delivery.createOrder({
+            shipment = await this.delivery.createOrder({
                 id: order.id,
                 extId: order.extId,
                 phone: user.phone,
                 recipientName,
                 deliveryPointId: point.id,
                 description: `Пробник: ${probe.productName}`,
-            }));
+            });
         } catch (error) {
             // Ключ идемпотентности уже сработал при повторе; если заказ в Ozon всё же есть, его найдут по extId
             this.logger.error(
@@ -265,10 +265,33 @@ export class OrderService {
             throw error;
         }
 
-        // Отправление уже создано, поэтому заказ после этого не отменяем
+        // Неподтверждённое отправление Ozon не принимает (например, не хватает баланса
+        // в кабинете Ozon Доставки): убираем его и возвращаем пробник
+        try {
+            await this.delivery.approvePosting(shipment.postingNumber);
+        } catch (error) {
+            this.logger.error(
+                `Заказ ${order.id}: отправление ${shipment.postingNumber} не подтверждено в Ozon Доставке`,
+            );
+            await this.delivery
+                .cancelPosting(shipment.postingNumber)
+                .catch(() =>
+                    this.logger.error(
+                        `Заказ ${order.id}: отправление ${shipment.postingNumber} нужно отменить в кабинете Ozon Доставки вручную`,
+                    ),
+                );
+            await this.cancel(order.id);
+            throw error;
+        }
+
+        // Отправление подтверждено, поэтому заказ после этого не отменяем
         return this.prisma.order.update({
             where: { id: order.id },
-            data: { status: "confirmed", ozonDeliveryNumber: orderNumber },
+            data: {
+                status: "confirmed",
+                ozonDeliveryNumber: shipment.orderNumber,
+                ozonPostingNumber: shipment.postingNumber,
+            },
             include: { items: true },
         });
     }

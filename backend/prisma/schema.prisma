@@ -69,9 +69,10 @@ model Order {
     postalCode       String?
     comment          String?
 
-    // Пункт выдачи Ozon Доставки и номер заказа в ней (только для заказа с пробником)
+    // Пункт выдачи Ozon Доставки, номер заказа и номер отправления в ней (только для заказа с пробником)
     deliveryPointId  Int?
     ozonDeliveryNumber String?          @unique
+    ozonPostingNumber String?           @unique
 
     items            OrderItem[]
 

@@ -1,7 +1,7 @@
 // @nestjs/axios — ESM-пакет, jest в CJS его не загружает; здесь нужен только как токен DI
 jest.mock("@nestjs/axios", () => ({ HttpService: class {} }));
 
-import { BadGatewayException } from "@nestjs/common";
+import { BadGatewayException, Logger } from "@nestjs/common";
 import { of, throwError } from "rxjs";
 import { OzonDeliveryService } from "./ozon-delivery.service";
 
@@ -32,6 +32,7 @@ describe("OzonDeliveryService", () => {
         token: Record<string, unknown> = {
             access_token: "token-1",
             expires_in: 3600,
+            scope: ["delivery-api.delivery"],
         },
     ) => {
         const queues = new Map(
@@ -66,7 +67,12 @@ describe("OzonDeliveryService", () => {
                 client_id: "client",
                 client_secret: "secret",
                 grant_type: "client_credentials",
-                scope: ["delivery-api.all"],
+                scope: [
+                    "delivery-api.delivery",
+                    "delivery-api.delivery-point",
+                    "delivery-api.order",
+                    "delivery-api.posting",
+                ],
             });
             expect(apiCalls()[0][2].headers.Authorization).toBe(
                 "Bearer token-1",
@@ -118,6 +124,41 @@ describe("OzonDeliveryService", () => {
             expect(
                 post.mock.calls.filter(([url]) => url === TOKEN_URL),
             ).toHaveLength(2);
+        });
+
+        it("reports a token issued for another Ozon application", async () => {
+            const error = jest
+                .spyOn(Logger.prototype, "error")
+                .mockImplementation();
+            const { service } = build(
+                { "/v1/delivery/check-client": [ok({})] },
+                {
+                    access_token: "token-1",
+                    expires_in: 3600,
+                    scope: ["seller-app-store-api.payment"],
+                },
+            );
+
+            await service.canDeliverTo("79001112233");
+
+            expect(error).toHaveBeenCalledWith(
+                expect.stringContaining("без доступа к Delivery API"),
+            );
+            error.mockRestore();
+        });
+
+        it("does not report a token with Delivery API access", async () => {
+            const error = jest
+                .spyOn(Logger.prototype, "error")
+                .mockImplementation();
+            const { service } = build({
+                "/v1/delivery/check-client": [ok({})],
+            });
+
+            await service.canDeliverTo("79001112233");
+
+            expect(error).not.toHaveBeenCalled();
+            error.mockRestore();
         });
 
         it("fails when the delivery is not configured", async () => {
@@ -250,6 +291,10 @@ describe("OzonDeliveryService", () => {
     });
 
     describe("createOrder", () => {
+        const created = {
+            order_number: "OZ-1",
+            postings: [{ request_id: 1, posting_number: "POST-1" }],
+        };
         const order = {
             id: 7,
             extId: "7d0f6b1e-0000-4000-8000-000000000007",
@@ -261,11 +306,12 @@ describe("OzonDeliveryService", () => {
 
         it("sends the parcel with the order UUID as idempotency key", async () => {
             const { service, apiCalls } = build({
-                "/v1/order/create": [ok({ order_number: "OZ-1" })],
+                "/v1/order/create": [ok(created)],
             });
 
             await expect(service.createOrder(order)).resolves.toEqual({
                 orderNumber: "OZ-1",
+                postingNumber: "POST-1",
             });
 
             const [url, body, config] = apiCalls()[0];
@@ -282,7 +328,6 @@ describe("OzonDeliveryService", () => {
                     {
                         request_id: 1,
                         shipment_method_id: 77,
-                        cutoff_at: null,
                         declared_value: { amount: "1", currency_code: "RUB" },
                         dimensions: {
                             weight_g: 100,
@@ -301,7 +346,7 @@ describe("OzonDeliveryService", () => {
             process.env.PROBE_WEIGHT_G = "40";
             process.env.PROBE_DECLARED_VALUE = "10";
             const { service, apiCalls } = build({
-                "/v1/order/create": [ok({ order_number: "OZ-1" })],
+                "/v1/order/create": [ok(created)],
             });
 
             await service.createOrder(order);
@@ -313,11 +358,12 @@ describe("OzonDeliveryService", () => {
 
         it("repeats the request with the same key after a network error", async () => {
             const { service, apiCalls } = build({
-                "/v1/order/create": [failure(), ok({ order_number: "OZ-1" })],
+                "/v1/order/create": [failure(), ok(created)],
             });
 
             await expect(service.createOrder(order)).resolves.toEqual({
                 orderNumber: "OZ-1",
+                postingNumber: "POST-1",
             });
             expect(apiCalls()).toHaveLength(2);
             expect(apiCalls()[1][2].headers["Idempotency-Key"]).toBe(
@@ -353,6 +399,139 @@ describe("OzonDeliveryService", () => {
             await expect(service.createOrder(order)).rejects.toBeInstanceOf(
                 BadGatewayException,
             );
+        });
+
+        it("fails when the response has no posting number", async () => {
+            const { service } = build({
+                "/v1/order/create": [
+                    ok({ order_number: "OZ-1", postings: [] }),
+                ],
+            });
+
+            await expect(service.createOrder(order)).rejects.toBeInstanceOf(
+                BadGatewayException,
+            );
+        });
+    });
+
+    describe("postings", () => {
+        it("confirms a posting by its number", async () => {
+            const { service, apiCalls } = build({
+                "/v1/posting/approve": [ok("")],
+            });
+
+            await expect(
+                service.approvePosting("POST-1"),
+            ).resolves.toBeUndefined();
+            expect(apiCalls()[0][0]).toBe(`${API}/v1/posting/approve`);
+            expect(apiCalls()[0][1]).toEqual({ posting_number: "POST-1" });
+        });
+
+        it("reports a posting that Ozon refused to confirm", async () => {
+            const { service, apiCalls } = build({
+                "/v1/posting/approve": [
+                    failure(400, { error: { code: "NotEnoughBalance" } }),
+                ],
+            });
+
+            await expect(
+                service.approvePosting("POST-1"),
+            ).rejects.toBeInstanceOf(BadGatewayException);
+            expect(apiCalls()).toHaveLength(1);
+        });
+
+        it("cancels a posting by its number", async () => {
+            const { service, apiCalls } = build({
+                "/v1/posting/cancel": [ok("")],
+            });
+
+            await service.cancelPosting("POST-1");
+
+            expect(apiCalls()[0][0]).toBe(`${API}/v1/posting/cancel`);
+            expect(apiCalls()[0][1]).toEqual({ posting_number: "POST-1" });
+        });
+    });
+
+    describe("testcookie", () => {
+        const challenge = ok({}, 302, {
+            location: "/v1/delivery/check-client",
+            "set-cookie": ["tc=abc; Path=/; HttpOnly"],
+        });
+
+        it("repeats the request with the cookie and keeps it for the next ones", async () => {
+            const { service, apiCalls } = build({
+                "/v1/delivery/check-client": [
+                    challenge,
+                    ok({ can_be_delivered: true }),
+                ],
+            });
+
+            await service.canDeliverTo("79001112233");
+            await service.canDeliverTo("79001112233");
+
+            const cookies = apiCalls().map(
+                ([, , config]) => config.headers.Cookie,
+            );
+            expect(cookies).toEqual([undefined, "tc=abc", "tc=abc"]);
+        });
+
+        it("replaces the cookie when Ozon issues a new one", async () => {
+            const { service, apiCalls } = build({
+                "/v1/delivery/check-client": [
+                    challenge,
+                    ok({ can_be_delivered: true }),
+                    ok({}, 307, {
+                        location: "/v1/delivery/check-client",
+                        "set-cookie": ["tc=def; Path=/"],
+                    }),
+                    ok({ can_be_delivered: true }),
+                ],
+            });
+
+            await service.canDeliverTo("79001112233");
+            await service.canDeliverTo("79001112233");
+
+            const cookies = apiCalls().map(
+                ([, , config]) => config.headers.Cookie,
+            );
+            expect(cookies).toEqual([undefined, "tc=abc", "tc=abc", "tc=def"]);
+        });
+
+        it("passes the check when requesting the token too", async () => {
+            const post = jest.fn((url: string, _body: unknown, config: any) => {
+                if (url !== TOKEN_URL) return ok({ can_be_delivered: true });
+                return config.headers.Cookie === "tc=1"
+                    ? ok({ access_token: "token-1", expires_in: 3600 })
+                    : ok({}, 302, {
+                          location: TOKEN_URL,
+                          "set-cookie": ["tc=1; Path=/"],
+                      });
+            });
+            const service = new OzonDeliveryService({ post } as any);
+
+            await expect(service.canDeliverTo("79001112233")).resolves.toBe(
+                true,
+            );
+            expect(
+                post.mock.calls.filter(([url]) => url === TOKEN_URL),
+            ).toHaveLength(2);
+        });
+    });
+
+    describe("scope", () => {
+        it("takes the access levels from the environment", async () => {
+            process.env.OZON_DELIVERY_SCOPE =
+                " delivery-api.all , delivery-api.order ";
+            const { post, service } = build({
+                "/v1/delivery/check-client": [ok({})],
+            });
+
+            await service.canDeliverTo("79001112233");
+
+            expect(post.mock.calls[0][1].scope).toEqual([
+                "delivery-api.all",
+                "delivery-api.order",
+            ]);
         });
     });
 

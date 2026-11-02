@@ -788,6 +788,7 @@ export const OrderScalarFieldEnum = {
   comment: 'comment',
   deliveryPointId: 'deliveryPointId',
   ozonDeliveryNumber: 'ozonDeliveryNumber',
+  ozonPostingNumber: 'ozonPostingNumber',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
