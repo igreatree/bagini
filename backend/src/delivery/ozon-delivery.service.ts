@@ -81,8 +81,8 @@ export class OzonDeliveryService {
     constructor(private httpService: HttpService) {}
 
     private get optionalConfig(): OzonDeliveryConfig | null {
-        const clientId = process.env.OZON_DELIVERY_CLIENT_ID;
-        const clientSecret = process.env.OZON_DELIVERY_CLIENT_SECRET;
+        const clientId = process.env.OZON_CLIENT_ID;
+        const clientSecret = process.env.OZON_CLIENT_SECRET;
         if (!clientId || !clientSecret) return null;
         return {
             clientId,

@@ -8,8 +8,8 @@ import { OzonDeliveryService } from "./ozon-delivery.service";
 describe("OzonDeliveryService", () => {
     const env = { ...process.env };
     beforeEach(() => {
-        process.env.OZON_DELIVERY_CLIENT_ID = "client";
-        process.env.OZON_DELIVERY_CLIENT_SECRET = "secret";
+        process.env.OZON_CLIENT_ID = "client";
+        process.env.OZON_CLIENT_SECRET = "secret";
         process.env.OZON_DELIVERY_SHIPMENT_METHOD_ID = "77";
     });
     afterEach(() => {
@@ -121,7 +121,7 @@ describe("OzonDeliveryService", () => {
         });
 
         it("fails when the delivery is not configured", async () => {
-            delete process.env.OZON_DELIVERY_CLIENT_ID;
+            delete process.env.OZON_CLIENT_ID;
             const { service } = build();
 
             expect(service.isConfigured).toBe(false);
