@@ -271,6 +271,7 @@ describe("OrderService.create", () => {
             }),
         };
         const delivery = {
+            checkoutOrder: jest.fn().mockResolvedValue({}),
             getPostingStatus: jest.fn().mockResolvedValue("ready_for_shipping"),
             canDeliverTo: jest
                 .fn()
@@ -329,6 +330,39 @@ describe("OrderService.create", () => {
     };
 
     describe("with a probe", () => {
+        it("does not create an order or reserve stock if Ozon cannot calculate delivery", async () => {
+            const { service, delivery, prisma, sheet } = build();
+            delivery.checkoutOrder.mockRejectedValue(
+                new Error("delivery_calculation_error"),
+            );
+            await expect(service.create(42, probeDto)).rejects.toThrow(
+                "delivery_calculation_error",
+            );
+            expect(prisma.order.create).not.toHaveBeenCalled();
+            expect(sheet.reserve).not.toHaveBeenCalled();
+            expect(delivery.createOrder).not.toHaveBeenCalled();
+        });
+
+        it("saves and uses the shipping cutoff returned by checkout", async () => {
+            const { service, delivery, prisma } = build();
+            delivery.checkoutOrder.mockResolvedValue({
+                cutoffAt: "2026-11-15T12:00:00Z",
+            } as never);
+            await service.create(42, probeDto);
+            expect(delivery.createOrder).toHaveBeenCalledWith(
+                expect.objectContaining({ cutoffAt: "2026-11-15T12:00:00Z" }),
+            );
+            expect(prisma.order.update).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: {
+                        ozonDeliveryRequest: expect.objectContaining({
+                            cutoffAt: "2026-11-15T12:00:00Z",
+                        }),
+                    },
+                }),
+            );
+        });
+
         it("keeps the order pending until Ozon finishes asynchronous approval", async () => {
             const { service, delivery, prisma, sheet } = build();
             delivery.getPostingStatus.mockResolvedValue("forming");

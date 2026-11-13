@@ -20,10 +20,10 @@ describe("OzonDeliveryService", () => {
     const API = "https://api-delivery.ozon.ru";
     const ok = (data: unknown, status = 200, headers = {}) =>
         of({ data, status, headers });
-    const failure = (status?: number, data: unknown = {}) =>
+    const failure = (status?: number, data: unknown = {}, headers = {}) =>
         throwError(() => ({
             message: "failed",
-            response: status ? { status, data } : undefined,
+            response: status ? { status, data, headers } : undefined,
         }));
 
     // handlers: путь API → ответы по очереди (последний повторяется)
@@ -186,6 +186,52 @@ describe("OzonDeliveryService", () => {
     });
 
     describe("pickup points", () => {
+        it("skips deleted points from a 404 response and reloads the rest of the batch", async () => {
+            const { service, apiCalls } = build({
+                "/v1/delivery-point/info": [
+                    failure(404, {
+                        error: {
+                            message:
+                                "Не найдены пункты выдачи: 2669663,2669680,2669688.",
+                        },
+                    }),
+                    ok({
+                        delivery_points: [
+                            { delivery_point_id: 520868, is_active: true },
+                        ],
+                    }),
+                ],
+            });
+            await expect(
+                service.getPoints([520868, 2669663, 2669680, 2669688]),
+            ).resolves.toMatchObject([{ id: 520868 }]);
+            expect(apiCalls()[1][1]).toEqual({ delivery_point_ids: [520868] });
+        });
+
+        it("returns an empty batch when all requested points were deleted", async () => {
+            const { service, apiCalls } = build({
+                "/v1/delivery-point/info": [
+                    failure(404, {
+                        error: { message: "Не найдены пункты выдачи: 10." },
+                    }),
+                ],
+            });
+            await expect(service.getPoints([10])).resolves.toEqual([]);
+            expect(apiCalls()).toHaveLength(1);
+        });
+
+        it("does not skip a batch for an unrelated 404 error", async () => {
+            const { service, apiCalls } = build({
+                "/v1/delivery-point/info": [
+                    failure(404, { error: { message: "Route not found" } }),
+                ],
+            });
+            await expect(service.getPoints([10])).rejects.toBeInstanceOf(
+                BadGatewayException,
+            );
+            expect(apiCalls()).toHaveLength(1);
+        });
+
         it("rejects an availability result belonging to a different pickup point", async () => {
             const { service } = build({
                 "/v1/delivery-point/check-availability": [
@@ -276,7 +322,7 @@ describe("OzonDeliveryService", () => {
                 postings: [
                     {
                         request_id: 1,
-                        declared_value: { amount: "1", currency_code: "RUB" },
+                        declared_value: { amount: "100", currency_code: "RUB" },
                         dimensions: {
                             weight_g: 100,
                             length_mm: 150,
@@ -337,7 +383,7 @@ describe("OzonDeliveryService", () => {
                     {
                         request_id: 1,
                         shipment_method_id: 77,
-                        declared_value: { amount: "1", currency_code: "RUB" },
+                        declared_value: { amount: "100", currency_code: "RUB" },
                         dimensions: {
                             weight_g: 100,
                             length_mm: 150,
@@ -363,6 +409,19 @@ describe("OzonDeliveryService", () => {
             const [posting] = apiCalls()[0][1].postings;
             expect(posting.dimensions.weight_g).toBe(40);
             expect(posting.declared_value.amount).toBe("10");
+        });
+
+        it("passes the checkout cutoff to order creation", async () => {
+            const { service, apiCalls } = build({
+                "/v1/order/create": [ok(created)],
+            });
+            await service.createOrder({
+                ...order,
+                cutoffAt: "2026-11-15T12:00:00Z",
+            });
+            expect(apiCalls()[0][1].postings[0].cutoff_at).toBe(
+                "2026-11-15T12:00:00Z",
+            );
         });
 
         it("repeats the request with the same key after a network error", async () => {
@@ -420,6 +479,139 @@ describe("OzonDeliveryService", () => {
             await expect(service.createOrder(order)).rejects.toBeInstanceOf(
                 BadGatewayException,
             );
+        });
+    });
+
+    describe("checkout", () => {
+        const recipient = { phone: "79001112233", deliveryPointId: 10 };
+        it("returns a safe business error and trace ID for a rejected order creation", async () => {
+            const { service } = build({
+                "/v1/order/create": [
+                    failure(
+                        400,
+                        {
+                            error: {
+                                message:
+                                    "Не удалось создать заказ. +79001112233",
+                            },
+                            details: [
+                                {
+                                    item_id: "1",
+                                    error: {
+                                        code: "delivery_calculation_error",
+                                    },
+                                },
+                            ],
+                        },
+                        { "x-o3-trace-id": "trace-123" },
+                    ),
+                ],
+            });
+            const result = await service
+                .createOrder({
+                    id: 53,
+                    extId: "uuid-53",
+                    phone: recipient.phone,
+                    deliveryPointId: 10,
+                    description: "Пробник",
+                })
+                .catch((error) => error.getResponse());
+            expect(result).toMatchObject({
+                deliveryCode: "delivery_calculation_error",
+                deliveryOperation: "/v1/order/create",
+                traceId: "trace-123",
+            });
+            expect(JSON.stringify(result)).not.toContain(recipient.phone);
+        });
+        it("calculates the parcel before creation and returns the Ozon cutoff", async () => {
+            const { service, apiCalls } = build({
+                "/v1/order/checkout": [
+                    ok({
+                        results: [
+                            {
+                                request_id: 1,
+                                posting: { cutoff_at: "2026-11-15T12:00:00Z" },
+                            },
+                        ],
+                    }),
+                ],
+            });
+            await expect(service.checkoutOrder(recipient)).resolves.toEqual({
+                cutoffAt: "2026-11-15T12:00:00Z",
+            });
+            expect(apiCalls()[0][1]).toMatchObject({
+                recipient: { phone_number: "+79001112233" },
+                delivery: { delivery_point: { delivery_point_id: 10 } },
+                postings: [
+                    {
+                        shipment_method_id: 77,
+                        declared_value: { amount: "100", currency_code: "RUB" },
+                    },
+                ],
+            });
+        });
+
+        it("preserves the nested Ozon calculation error from the real HTTP 400 response", async () => {
+            const { service } = build({
+                "/v1/order/checkout": [
+                    failure(400, {
+                        error: { message: "Не удалось создать заказ." },
+                        details: [
+                            {
+                                item_id: "1",
+                                error: {
+                                    code: "delivery_calculation_error",
+                                    message:
+                                        "Ошибка предрасчета стоимости доставки",
+                                },
+                            },
+                        ],
+                    }),
+                ],
+            });
+            await expect(
+                service.checkoutOrder(recipient),
+            ).rejects.toMatchObject({
+                response: {
+                    deliveryCode: "delivery_calculation_error",
+                    deliveryOperation: "/v1/order/checkout",
+                    message: expect.stringContaining(
+                        "рассчитать стоимость доставки",
+                    ),
+                },
+            });
+        });
+
+        it("handles a per-posting error even when checkout responds with HTTP 200", async () => {
+            const { service } = build({
+                "/v1/order/checkout": [
+                    ok({
+                        results: [
+                            {
+                                request_id: 1,
+                                error: { code: "delivery_calculation_error" },
+                            },
+                        ],
+                    }),
+                ],
+            });
+            await expect(
+                service.checkoutOrder(recipient),
+            ).rejects.toMatchObject({
+                response: { deliveryCode: "delivery_calculation_error" },
+            });
+        });
+
+        it("does not claim that an order exists when a read-only checkout times out", async () => {
+            const { service } = build({ "/v1/order/checkout": [failure()] });
+            await expect(
+                service.checkoutOrder(recipient),
+            ).rejects.toMatchObject({
+                response: {
+                    message: "Ошибка сервиса доставки",
+                    deliveryOperation: "/v1/order/checkout",
+                },
+            });
         });
     });
 

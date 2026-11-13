@@ -26,14 +26,15 @@ const DEFAULT_TOKEN_TTL_SECONDS = 5 * 60;
 const MAX_REDIRECTS = 3;
 const CURRENCY_RUB = "RUB";
 
-// Габариты и оценочная стоимость посылки с пробником. Нулевую оценочную
-// стоимость Ozon не принимает, поэтому по умолчанию 1 ₽.
+// Габариты и оценочная стоимость посылки с пробником. Расчёт Ozon для нашего
+// способа отгрузки проходит со 100 ₽; с 1 ₽ возвращает delivery_calculation_error.
+// Это оценка посылки для Ozon, стоимость заказа для покупателя остаётся нулевой.
 const PARCEL_DEFAULTS = {
     weightG: 100,
     lengthMm: 150,
     widthMm: 100,
     heightMm: 50,
-    declaredValue: 1,
+    declaredValue: 100,
 };
 
 export type OzonDeliveryPoint = {
@@ -88,6 +89,66 @@ export class OzonDeliveryUncertainException extends BadGatewayException {
         super("Ozon обрабатывает заказ. Проверьте его статус в списке заказов");
     }
 }
+
+// list может содержать уже удалённые ПВЗ; info отклоняет весь пакет с HTTP 404.
+class MissingDeliveryPointsException extends Error {
+    constructor(readonly ids: number[]) {
+        super("Ozon удалил пункты выдачи из справочника");
+    }
+}
+
+const missingPointIds = (data: any): number[] => {
+    const message = data?.error?.message;
+    if (typeof message !== "string") return [];
+    const match = /^Не найдены пункты выдачи:\s*([\d,\s]+)\.?$/u.exec(message);
+    return match
+        ? match[1]
+              .split(",")
+              .map(Number)
+              .filter((id) => Number.isSafeInteger(id) && id > 0)
+        : [];
+};
+
+const errorCode = (data: any): string | undefined => {
+    const code =
+        data?.details?.find((detail: any) => detail?.error?.code)?.error
+            ?.code ?? data?.error?.code;
+    return typeof code === "string" && /^[a-zA-Z0-9_]+$/.test(code)
+        ? code
+        : undefined;
+};
+
+const deliveryError = (path: string, data: unknown, traceId?: string) => {
+    const code = errorCode(data);
+    const normalized = code?.replace(/_/g, "").toLowerCase();
+    const messages: Record<string, string> = {
+        deliverycalculationerror:
+            "Ozon не смог рассчитать стоимость доставки. Выберите другой ПВЗ или повторите позже",
+        deliveryavailabilityerror:
+            "Ozon не смог рассчитать доставку до выбранного ПВЗ. Выберите другой пункт или повторите позже",
+        deliverypointnotfound:
+            "Пункт выдачи больше недоступен. Выберите другой ПВЗ",
+        deliverypointrestrictionserror:
+            "Выбранный ПВЗ не принимает эту посылку. Выберите другой пункт",
+        samedeliverypointerror:
+            "Выбранный ПВЗ недоступен для этого отправления. Выберите другой пункт",
+        recipienterror:
+            "Ozon не может доставить заказ получателю. Проверьте регистрацию в Ozon с номером вашего аккаунта",
+        notenoughbalance:
+            "Не удалось оформить бесплатную доставку. Обратитесь в поддержку магазина",
+        principalerror:
+            "Не удалось оформить доставку. Обратитесь в поддержку магазина",
+    };
+    return new BadGatewayException({
+        statusCode: 502,
+        error: "Bad Gateway",
+        message:
+            (normalized && messages[normalized]) || "Ошибка сервиса доставки",
+        ...(code ? { deliveryCode: code } : {}),
+        deliveryOperation: path,
+        ...(traceId ? { traceId } : {}),
+    });
+};
 
 @Injectable()
 export class OzonDeliveryService {
@@ -341,12 +402,31 @@ export class OzonDeliveryService {
                     continue;
                 }
                 if (error instanceof InternalServerErrorException) throw error;
+                if (
+                    path === "/v1/delivery-point/info" &&
+                    error?.response?.status === 404
+                ) {
+                    const ids = missingPointIds(error.response.data);
+                    if (ids.length)
+                        throw new MissingDeliveryPointsException(ids);
+                }
                 this.logger.error(
-                    `Ozon Delivery ${path} failed: ${error?.message} ${JSON.stringify(error?.response?.data)}`,
+                    `Ozon Delivery ${path} failed: ${error?.message} trace_id=${error?.response?.headers?.["x-o3-trace-id"] ?? "unknown"} ${JSON.stringify(error?.response?.data)}`,
                 );
-                if (isAmbiguous(error))
+                if (
+                    isAmbiguous(error) &&
+                    [
+                        "/v1/order/create",
+                        "/v1/posting/approve",
+                        "/v1/posting/cancel",
+                    ].includes(path)
+                )
                     throw new OzonDeliveryUncertainException();
-                throw new BadGatewayException("Ошибка сервиса доставки");
+                throw deliveryError(
+                    path,
+                    error?.response?.data,
+                    error?.response?.headers?.["x-o3-trace-id"],
+                );
             }
         }
     }
@@ -380,9 +460,25 @@ export class OzonDeliveryService {
 
     async getPoints(ids: number[]): Promise<OzonDeliveryPointInfo[]> {
         if (ids.length === 0) return [];
-        const data = await this.post("/v1/delivery-point/info", {
-            delivery_point_ids: ids,
-        });
+        let data: any;
+        try {
+            data = await this.post("/v1/delivery-point/info", {
+                delivery_point_ids: ids,
+            });
+        } catch (error) {
+            if (!(error instanceof MissingDeliveryPointsException)) throw error;
+            const removed = new Set(error.ids);
+            const remaining = ids.filter((id) => !removed.has(id));
+            if (remaining.length === ids.length) {
+                throw new BadGatewayException(
+                    "Ошибка справочника пунктов выдачи Ozon",
+                );
+            }
+            this.logger.warn(
+                `Пропускаем удалённые пункты выдачи Ozon: ${ids.filter((id) => removed.has(id)).join(", ")}`,
+            );
+            return this.getPoints(remaining);
+        }
         return (data?.delivery_points ?? []).map((point: any) => ({
             id: Number(point.delivery_point_id),
             name: String(point.name ?? ""),
@@ -416,7 +512,40 @@ export class OzonDeliveryService {
         return true;
     }
 
-    // extId заказа — UUID, он же Idempotency-Key: повторный запрос не создаст второй заказ
+    // В отличие от check-availability, рассчитывает тариф для конкретного получателя.
+    async checkoutOrder(order: {
+        phone: string;
+        deliveryPointId: number;
+    }): Promise<{ cutoffAt?: string }> {
+        const data = await this.post("/v1/order/checkout", {
+            recipient: {
+                phone_number: toOzonPhone(order.phone),
+            },
+            delivery: {
+                delivery_point: { delivery_point_id: order.deliveryPointId },
+            },
+            postings: [this.posting],
+        });
+        const result = data?.results?.find(
+            (result: any) =>
+                Number(result.request_id) === this.posting.request_id,
+        );
+        if (result?.error) {
+            this.logger.error(
+                `Ozon Delivery /v1/order/checkout rejected: ${JSON.stringify(result.error)}`,
+            );
+            throw deliveryError("/v1/order/checkout", { error: result.error });
+        }
+        if (!result?.posting) {
+            throw new BadGatewayException(
+                "Ozon не вернул расчёт доставки. Повторите позже",
+            );
+        }
+        const cutoffAt = result.posting.cutoff_at;
+        return typeof cutoffAt === "string" ? { cutoffAt } : {};
+    }
+
+    // extId заказа — UUID, он же Idempotency-Key: повторный запрос не создаст второй заказ.
     async createOrder(order: {
         id: number;
         extId: string;
@@ -424,6 +553,7 @@ export class OzonDeliveryService {
         recipientName?: string;
         deliveryPointId: number;
         description: string;
+        cutoffAt?: string;
     }): Promise<{ orderNumber: string; postingNumber: string }> {
         const data = await this.post(
             "/v1/order/create",
@@ -443,6 +573,9 @@ export class OzonDeliveryService {
                 postings: [
                     {
                         ...this.posting,
+                        ...(order.cutoffAt
+                            ? { cutoff_at: order.cutoffAt }
+                            : {}),
                         posting_external_id: String(order.id),
                         description: order.description.slice(0, 500),
                     },

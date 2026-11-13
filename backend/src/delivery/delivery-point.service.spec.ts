@@ -60,6 +60,25 @@ describe("DeliveryPointService", () => {
     };
 
     describe("sync", () => {
+        it("continues to the next page when every point in a batch was deleted", async () => {
+            const { service, ozon, prisma } = build({
+                pages: [
+                    { ids: [1, 2], nextCursor: "c1" },
+                    { ids: [3], nextCursor: null },
+                ],
+            });
+            ozon.getPoints.mockResolvedValueOnce([]);
+            await service.sync();
+            expect(ozon.listPoints).toHaveBeenCalledTimes(2);
+            expect(prisma.deliveryPoint.upsert).toHaveBeenCalledTimes(1);
+            expect(prisma.deliveryPoint.upsert).toHaveBeenCalledWith(
+                expect.objectContaining({ where: { id: 3n } }),
+            );
+            expect(prisma.deliveryPoint.updateMany).toHaveBeenCalledWith(
+                expect.objectContaining({ data: { isActive: false } }),
+            );
+        });
+
         it("walks all pages and stores every point with its shipment methods", async () => {
             const { service, prisma, ozon } = build({
                 pages: [
