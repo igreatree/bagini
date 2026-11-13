@@ -101,7 +101,12 @@ export default function OrdersPage() {
                                 variant="light"
                                 color={orderStatusColors[order.status]}
                             >
-                                {orderStatusLabels[order.status]}
+                                {order.total === 0 && order.status === "pending"
+                                    ? "Оформляется доставка"
+                                    : order.total === 0 &&
+                                        order.status === "cancelled"
+                                      ? "Отменён"
+                                      : orderStatusLabels[order.status]}
                             </Badge>
                         </Group>
                         <Text size="xs" c="dimmed" mb="sm">
@@ -138,7 +143,9 @@ export default function OrdersPage() {
                                     ? `Доставка: ${formatPrice(order.deliveryPrice)} ₽`
                                     : ""}
                             </Text>
-                            <Text fw={700}>{formatPriceLabel(order.total, " ")}</Text>
+                            <Text fw={700}>
+                                {formatPriceLabel(order.total, " ")}
+                            </Text>
                         </Group>
                         {order.status === "pending" && order.paymentUrl && (
                             <Button

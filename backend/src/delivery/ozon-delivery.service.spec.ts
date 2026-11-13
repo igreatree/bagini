@@ -186,6 +186,15 @@ describe("OzonDeliveryService", () => {
     });
 
     describe("pickup points", () => {
+        it("rejects an availability result belonging to a different pickup point", async () => {
+            const { service } = build({
+                "/v1/delivery-point/check-availability": [
+                    ok({ results: [{ request_id: 1, delivery_point_id: 99 }] }),
+                ],
+            });
+            await expect(service.isPointAvailable(10)).resolves.toBe(false);
+        });
+
         it("reads a page of the directory starting with a null cursor", async () => {
             const { service, apiCalls } = build({
                 "/v1/delivery-point/list": [
@@ -318,7 +327,7 @@ describe("OzonDeliveryService", () => {
             expect(url).toBe(`${API}/v1/order/create`);
             expect(config.headers["Idempotency-Key"]).toBe(order.extId);
             expect(body).toEqual({
-                order_external_id: "7",
+                order_external_id: order.extId,
                 recipient: {
                     phone_number: "+79001112233",
                     full_name: "Анна Иванова",

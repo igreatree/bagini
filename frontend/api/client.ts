@@ -18,6 +18,7 @@ Api.interceptors.response.use(
             color: "red",
             message: processErrorMessage(error),
         });
+        return Promise.reject(error);
     },
 );
 

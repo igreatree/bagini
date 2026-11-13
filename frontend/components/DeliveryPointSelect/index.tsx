@@ -23,6 +23,7 @@ export const DeliveryPointSelect = ({
     const [result, setResult] = useState<{
         query: string;
         items: DeliveryPointType[];
+        failed?: boolean;
     }>({ query: "", items: [] });
 
     useEffect(() => {
@@ -30,7 +31,11 @@ export const DeliveryPointSelect = ({
         let actual = true;
         searchDeliveryPoints(query).then((res) => {
             if (actual) {
-                setResult({ query, items: "items" in res ? res.items : [] });
+                setResult({
+                    query,
+                    items: "items" in res ? res.items : [],
+                    failed: !("items" in res),
+                });
             }
         });
         return () => {
@@ -44,7 +49,8 @@ export const DeliveryPointSelect = ({
     // Выбранный пункт остаётся в списке, даже когда он не попал в новую выдачу
     const points = new Map<number, DeliveryPointType>();
     if (value) points.set(value.id, value);
-    if (searching) result.items.forEach((point) => points.set(point.id, point));
+    if (searching && result.query === query)
+        result.items.forEach((point) => points.set(point.id, point));
 
     return (
         <Select
@@ -69,7 +75,9 @@ export const DeliveryPointSelect = ({
                     ? "Введите не меньше трёх символов"
                     : loading
                       ? "Ищем пункты выдачи…"
-                      : "Пункты выдачи не найдены"
+                      : result.failed
+                        ? "Не удалось загрузить ПВЗ. Измените запрос и повторите поиск"
+                        : "Пункты выдачи не найдены"
             }
             rightSection={loading ? <Loader size={16} /> : undefined}
             mb="md"

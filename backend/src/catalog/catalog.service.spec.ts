@@ -96,14 +96,16 @@ describe("CatalogService", () => {
             });
         });
         const sheet = {
-            getItems: jest.fn().mockResolvedValue(
-                new Map(
-                    Object.entries(sheetStocks).map(([offerId, stock]) => [
-                        offerId,
-                        { stock, price: null },
-                    ]),
+            getItems: jest
+                .fn()
+                .mockResolvedValue(
+                    new Map(
+                        Object.entries(sheetStocks).map(([offerId, stock]) => [
+                            offerId,
+                            { stock, price: null },
+                        ]),
+                    ),
                 ),
-            ),
         };
         const service = new CatalogService(
             { post } as any,
@@ -264,6 +266,14 @@ describe("CatalogService", () => {
         const found = await service.findByIds(["1", "2"]);
 
         expect(found.map((p) => p.id)).toEqual(["1", "2"]);
+    });
+
+    it("loads a free probe with no Seller price", async () => {
+        const probe = raw(9, "Пробник", "", { stocks: { stocks: [] } });
+        const { service } = build([probe], { sheet: { "offer-9": 5 } });
+        await expect(
+            service.findByOfferIds(["offer-9"]),
+        ).resolves.toMatchObject([{ id: "9", price: 0 }]);
     });
 
     it("hides excluded offers from the list", async () => {

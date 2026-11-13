@@ -61,7 +61,7 @@ type OzonDeliveryConfig = {
 
 const intFromEnv = (name: string, fallback: number) => {
     const value = Number(process.env[name]);
-    return Number.isInteger(value) && value > 0 ? value : fallback;
+    return Number.isSafeInteger(value) && value > 0 ? value : fallback;
 };
 
 const toNumberOrNull = (value: unknown) => {
@@ -80,6 +80,14 @@ const isAmbiguous = (error: any) => {
     const status = error?.response?.status;
     return status === undefined || status >= 500;
 };
+
+// При таймауте Ozon мог принять запрос. Лимит и остаток такого заказа
+// нельзя освобождать до проверки результата в Ozon.
+export class OzonDeliveryUncertainException extends BadGatewayException {
+    constructor() {
+        super("Ozon обрабатывает заказ. Проверьте его статус в списке заказов");
+    }
+}
 
 @Injectable()
 export class OzonDeliveryService {
@@ -179,10 +187,15 @@ export class OzonDeliveryService {
             // Токен выдаётся любому приложению Ozon, но Delivery API принимает только токен
             // приложения Ozon Доставки (scope delivery-api.*); с чужими ключами будет 401
             const granted: unknown = response.data?.scope;
+            const grantedScopes = Array.isArray(granted)
+                ? granted.map(String)
+                : typeof granted === "string"
+                  ? granted.split(/[\s,]+/)
+                  : null;
             if (
-                !Array.isArray(granted) ||
-                !granted.some((scope) =>
-                    String(scope).startsWith("delivery-api."),
+                grantedScopes &&
+                !grantedScopes.some((scope) =>
+                    scope.startsWith("delivery-api."),
                 )
             ) {
                 this.logger.error(
@@ -331,6 +344,8 @@ export class OzonDeliveryService {
                 this.logger.error(
                     `Ozon Delivery ${path} failed: ${error?.message} ${JSON.stringify(error?.response?.data)}`,
                 );
+                if (isAmbiguous(error))
+                    throw new OzonDeliveryUncertainException();
                 throw new BadGatewayException("Ошибка сервиса доставки");
             }
         }
@@ -387,7 +402,11 @@ export class OzonDeliveryService {
             shipment_method_id,
             postings: [posting],
         });
-        const result = (data?.results ?? [])[0];
+        const result = (data?.results ?? []).find(
+            (result: any) =>
+                Number(result.request_id) === posting.request_id &&
+                Number(result.delivery_point_id) === pointId,
+        );
         if (!result || result.error) {
             this.logger.warn(
                 `Ozon Delivery point ${pointId} unavailable: ${JSON.stringify(result?.error)}`,
@@ -409,7 +428,7 @@ export class OzonDeliveryService {
         const data = await this.post(
             "/v1/order/create",
             {
-                order_external_id: String(order.id),
+                order_external_id: order.extId,
                 recipient: {
                     phone_number: toOzonPhone(order.phone),
                     ...(order.recipientName
@@ -444,7 +463,7 @@ export class OzonDeliveryService {
             this.logger.error(
                 `Ozon Delivery order/create (${order.extId}): unexpected response ${JSON.stringify(data)}`,
             );
-            throw new BadGatewayException("Ошибка сервиса доставки");
+            throw new OzonDeliveryUncertainException();
         }
         return { orderNumber, postingNumber };
     }
@@ -456,6 +475,21 @@ export class OzonDeliveryService {
         await this.post("/v1/posting/approve", {
             posting_number: postingNumber,
         });
+    }
+
+    async getPostingStatus(postingNumber: string): Promise<string> {
+        const data = await this.post("/v1/posting/info", {
+            posting_numbers: [postingNumber],
+        });
+        const posting = (data?.postings ?? []).find(
+            (posting: any) => posting.posting_number === postingNumber,
+        );
+        if (typeof posting?.status !== "string") {
+            throw new BadGatewayException(
+                "Не удалось получить статус доставки",
+            );
+        }
+        return posting.status;
     }
 
     // Отмена доступна, пока отправление не передано курьеру Ozon

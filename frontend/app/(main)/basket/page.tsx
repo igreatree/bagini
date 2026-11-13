@@ -60,6 +60,11 @@ export default function BasketPage() {
         setBuyTermsApplied,
     } = useUserStore();
     const [products, setProducts] = useState<IProduct[] | null>(null);
+    const [loadResult, setLoadResult] = useState<{
+        ids: string;
+        failed: boolean;
+    } | null>(null);
+    const [attempt, setAttempt] = useState(0);
     const [checkoutLoading, setCheckoutLoading] = useState(false);
     const [point, setPoint] = useState<DeliveryPointType | null>(null);
     const router = useRouter();
@@ -75,7 +80,9 @@ export default function BasketPage() {
         if (!basketIds) return;
         let actual = true;
         getProductsByIds(basketIds.split(",")).then((res) => {
-            if (!actual || !("items" in res)) return;
+            if (!actual) return;
+            setLoadResult({ ids: basketIds, failed: !("items" in res) });
+            if (!("items" in res)) return;
             setProducts(res.items);
 
             const available = new Set(res.items.map((product) => product.id));
@@ -114,7 +121,7 @@ export default function BasketPage() {
         };
         // updateBasket из zustand-стора стабилен
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [basketIds]);
+    }, [basketIds, attempt]);
 
     const items: BasketItem[] = useMemo(() => {
         return basket.flatMap((item) => {
@@ -189,7 +196,27 @@ export default function BasketPage() {
     //     );
     // }
 
-    if (basket.length > 0 && items.length === 0) {
+    if (
+        basket.length > 0 &&
+        loadResult?.ids === basketIds &&
+        loadResult.failed
+    ) {
+        return (
+            <Stack gap="md">
+                <Alert color="red">Не удалось загрузить корзину</Alert>
+                <Button
+                    onClick={() => {
+                        setLoadResult(null);
+                        setAttempt((value) => value + 1);
+                    }}
+                >
+                    Повторить
+                </Button>
+            </Stack>
+        );
+    }
+
+    if (basket.length > 0 && loadResult?.ids !== basketIds) {
         return (
             <Container size="xl" p={0}>
                 <Stack gap="md">

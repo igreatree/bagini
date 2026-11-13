@@ -10,8 +10,15 @@ import type { OrderStatus } from "../../generated/prisma/enums";
 import { CreateOrderDto, OrderItemDto } from "./dto/create-order.dto";
 import { CatalogService } from "../catalog/catalog.service";
 import { SheetService } from "../sheet/sheet.service";
-import { OzonDeliveryService } from "../delivery/ozon-delivery.service";
+import {
+    OzonDeliveryService,
+    OzonDeliveryUncertainException,
+} from "../delivery/ozon-delivery.service";
 import { DeliveryPointService } from "../delivery/delivery-point.service";
+import type { Prisma } from "../../generated/prisma/client";
+
+type StoredOrder = Prisma.OrderGetPayload<{ include: { items: true } }>;
+type DeliveryRequest = Parameters<OzonDeliveryService["createOrder"]>[0];
 
 // Статусы заказа на стороне Ozon, которые меняют статус заказа в магазине.
 // Остальные (например, STATUS_PAYMENT_PENDING) оставляют заказ как есть.
@@ -24,6 +31,7 @@ const mapOzonStatus = (ozonStatus: string): OrderStatus | null => {
 @Injectable()
 export class OrderService {
     private readonly logger = new Logger(OrderService.name);
+    private readonly submissions = new Map<number, Promise<StoredOrder>>();
 
     constructor(
         private prisma: PrismaService,
@@ -246,62 +254,187 @@ export class OrderService {
             throw error;
         }
 
-        let shipment: { orderNumber: string; postingNumber: string };
-        try {
-            shipment = await this.delivery.createOrder({
-                id: order.id,
-                extId: order.extId,
-                phone: user.phone,
-                recipientName,
-                deliveryPointId: point.id,
-                description: `Пробник: ${probe.productName}`,
-            });
-        } catch (error) {
-            // Ключ идемпотентности уже сработал при повторе; если заказ в Ozon всё же есть, его найдут по extId
-            this.logger.error(
-                `Заказ ${order.id} (${order.extId}) не создан в Ozon Доставке`,
-            );
-            await this.cancel(order.id);
-            throw error;
-        }
-
-        // Неподтверждённое отправление Ozon не принимает (например, не хватает баланса
-        // в кабинете Ozon Доставки): убираем его и возвращаем пробник
-        try {
-            await this.delivery.approvePosting(shipment.postingNumber);
-        } catch (error) {
-            this.logger.error(
-                `Заказ ${order.id}: отправление ${shipment.postingNumber} не подтверждено в Ozon Доставке`,
-            );
-            await this.delivery
-                .cancelPosting(shipment.postingNumber)
-                .catch(() =>
-                    this.logger.error(
-                        `Заказ ${order.id}: отправление ${shipment.postingNumber} нужно отменить в кабинете Ozon Доставки вручную`,
-                    ),
-                );
-            await this.cancel(order.id);
-            throw error;
-        }
-
-        // Отправление подтверждено, поэтому заказ после этого не отменяем
-        return this.prisma.order.update({
+        // Запрос сохраняется только ПОСЛЕ резерва. Его можно повторить после
+        // таймаута или перезапуска, не списывая остаток и не создавая новый заказ.
+        const reserved = await this.prisma.order.update({
             where: { id: order.id },
             data: {
-                status: "confirmed",
+                ozonDeliveryRequest: {
+                    id: order.id,
+                    extId: order.extId,
+                    phone: user.phone,
+                    recipientName,
+                    deliveryPointId: point.id,
+                    description: `Пробник: ${probe.productName}`,
+                },
+            },
+            include: { items: true },
+        });
+        return this.submitProbeOrder(reserved);
+    }
+
+    private async submitProbeOrder(order: StoredOrder): Promise<StoredOrder> {
+        const running = this.submissions.get(order.id);
+        if (running) return running;
+        const submission = this.sendProbeOrder(order).finally(() => {
+            this.submissions.delete(order.id);
+        });
+        this.submissions.set(order.id, submission);
+        return submission;
+    }
+
+    private async sendProbeOrder(order: StoredOrder): Promise<StoredOrder> {
+        let shipment: { orderNumber: string; postingNumber: string };
+        try {
+            shipment = await this.delivery.createOrder(
+                order.ozonDeliveryRequest as unknown as DeliveryRequest,
+            );
+        } catch (error) {
+            this.logger.error(
+                `Заказ ${order.id} (${order.extId}): ошибка создания в Ozon Доставке`,
+            );
+            // Следующий запрос статуса повторит этот же запрос с тем же ключом.
+            if (error instanceof OzonDeliveryUncertainException) return order;
+            await this.cancel(order.id);
+            throw error;
+        }
+
+        // Сохраняем номера ДО подтверждения: после сбоя статус можно проверить повторно.
+        const submitted = await this.prisma.order.update({
+            where: { id: order.id },
+            data: {
                 ozonDeliveryNumber: shipment.orderNumber,
                 ozonPostingNumber: shipment.postingNumber,
             },
             include: { items: true },
         });
+        return this.approveProbePosting(submitted);
+    }
+
+    private async approveProbePosting(
+        submitted: StoredOrder,
+    ): Promise<StoredOrder> {
+        try {
+            await this.delivery.approvePosting(submitted.ozonPostingNumber!);
+        } catch (error) {
+            this.logger.error(
+                `Заказ ${submitted.id}: ошибка подтверждения ${submitted.ozonPostingNumber} в Ozon Доставке`,
+            );
+            if (error instanceof OzonDeliveryUncertainException)
+                return submitted;
+            // Другой запрос мог уже подтвердить отправление. Ошибка повторного
+            // approve не должна отменять успешно оформленную посылку.
+            let status: string;
+            try {
+                status = await this.delivery.getPostingStatus(
+                    submitted.ozonPostingNumber!,
+                );
+            } catch {
+                return submitted;
+            }
+            if (!["created", "forming_failed"].includes(status)) {
+                return this.syncDelivery(submitted, false);
+            }
+            if (!(await this.cancelProbePosting(submitted))) return submitted;
+            throw error;
+        }
+
+        // approve асинхронен: HTTP 200 ещё не означает готовность к отгрузке.
+        return this.syncDelivery(submitted, false);
+    }
+
+    private async cancelProbePosting(order: {
+        id: number;
+        ozonPostingNumber: string | null;
+    }) {
+        try {
+            await this.delivery.cancelPosting(order.ozonPostingNumber!);
+        } catch {
+            this.logger.error(
+                `Заказ ${order.id}: отмена ${order.ozonPostingNumber} не подтверждена; резерв и лимит сохранены`,
+            );
+            return false;
+        }
+        await this.cancel(order.id);
+        return true;
+    }
+
+    private async syncDelivery<
+        T extends {
+            id: number;
+            status: OrderStatus;
+            ozonPostingNumber: string | null;
+            ozonDeliveryRequest?: unknown;
+        },
+    >(order: T, approveCreated = true): Promise<T> {
+        if (order.status !== "pending") return order;
+        try {
+            if (!order.ozonPostingNumber) {
+                if (order.ozonDeliveryRequest && approveCreated) {
+                    return (await this.submitProbeOrder(
+                        order as unknown as StoredOrder,
+                    )) as unknown as T;
+                }
+                return order;
+            }
+            const status = await this.delivery.getPostingStatus(
+                order.ozonPostingNumber,
+            );
+            if (status === "created" && approveCreated) {
+                return (await this.approveProbePosting(
+                    order as unknown as StoredOrder,
+                )) as unknown as T;
+            } else if (status === "forming_failed") {
+                if (await this.cancelProbePosting(order)) {
+                    return (await this.prisma.order.findUniqueOrThrow({
+                        where: { id: order.id },
+                        include: { items: true },
+                    })) as unknown as T;
+                }
+            } else if (status === "canceled") {
+                return (await this.cancel(order.id)) as unknown as T;
+            } else if (
+                [
+                    "ready_for_shipping",
+                    "in_container",
+                    "acceptance_in_progress",
+                    "on_way",
+                    "not_accepted_to_delivery",
+                    "in_delivery_point",
+                    "in_courier_service",
+                    "delivered",
+                ].includes(status)
+            ) {
+                return (await this.prisma.order.update({
+                    where: { id: order.id },
+                    data: { status: "confirmed" },
+                    include: { items: true },
+                })) as unknown as T;
+            }
+        } catch (error) {
+            this.logger.warn(
+                `Заказ ${order.id}: статус доставки пока не обновлён`,
+            );
+            // При определённой ошибке отправка могла отменить заказ в БД.
+            return (await this.prisma.order.findUniqueOrThrow({
+                where: { id: order.id },
+                include: { items: true },
+            })) as unknown as T;
+        }
+        return order;
     }
 
     // Пробник текущего аккаунта: неотменённый заказ, который занимает лимит
     async findProbePurchase(userId: number) {
-        return this.prisma.order.findUnique({
+        const order = await this.prisma.order.findUnique({
             where: { probeUserId: userId },
-            select: { id: true, status: true },
+            include: { items: true },
         });
+        if (!order) return null;
+        const synced = await this.syncDelivery(order);
+        return synced.status === "cancelled"
+            ? null
+            : { id: synced.id, status: synced.status };
     }
 
     // Отмена освобождает лимит аккаунта и возвращает пробник в таблицу. Условие по
@@ -354,7 +487,7 @@ export class OrderService {
             include: { items: true },
         });
         if (!order) throw new NotFoundException("Заказ не найден");
-        return this.syncPayment(order);
+        return this.syncPayment(await this.syncDelivery(order));
     }
 
     // Статус берём из getOrderStatus, а не из тела уведомления: запрос

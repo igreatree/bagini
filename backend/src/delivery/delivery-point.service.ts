@@ -3,6 +3,7 @@ import {
     Logger,
     OnApplicationBootstrap,
     OnModuleDestroy,
+    ServiceUnavailableException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma.service";
 import { OzonDeliveryService } from "./ozon-delivery.service";
@@ -74,6 +75,8 @@ export class DeliveryPointService
         const startedAt = new Date();
         let cursor: string | null = null;
         let total = 0;
+        const seenCursors = new Set<string>();
+        const seenIds: bigint[] = [];
 
         for (let page = 0; page < MAX_PAGES; page++) {
             const list = await this.ozon.listPoints(cursor, PAGE_SIZE);
@@ -91,34 +94,61 @@ export class DeliveryPointService
                         latitude: info.latitude,
                         longitude: info.longitude,
                         isActive: info.isActive,
-                        shipmentMethodIds: methods.get(info.id) ?? [],
-                        syncedAt: new Date(),
+                        shipmentMethodIds: (methods.get(info.id) ?? []).map(
+                            BigInt,
+                        ),
                     };
                     return this.prisma.deliveryPoint.upsert({
-                        where: { id: info.id },
-                        create: { id: info.id, ...data },
+                        where: { id: BigInt(info.id) },
+                        create: {
+                            id: BigInt(info.id),
+                            syncedAt: new Date(0),
+                            ...data,
+                        },
                         update: data,
                     });
                 }),
             );
             total += infos.length;
+            seenIds.push(...infos.map((info) => BigInt(info.id)));
 
-            if (
-                !list.nextCursor ||
-                list.nextCursor === cursor ||
-                list.points.length === 0
-            ) {
-                // Список дочитан: пункты, которых в нём больше нет, закрыты
-                await this.prisma.deliveryPoint.updateMany({
-                    where: { syncedAt: { lt: startedAt } },
-                    data: { isActive: false },
-                });
+            if (!list.nextCursor) {
+                // Дату полного обновления меняем только после последней страницы.
+                // Иначе сбой на середине обхода делает неполный справочник «свежим» на сутки.
+                const updates: ReturnType<
+                    typeof this.prisma.deliveryPoint.updateMany
+                >[] = [];
+                for (let offset = 0; offset < seenIds.length; offset += 1000) {
+                    updates.push(
+                        this.prisma.deliveryPoint.updateMany({
+                            where: {
+                                id: {
+                                    in: seenIds.slice(offset, offset + 1000),
+                                },
+                            },
+                            data: { syncedAt: startedAt },
+                        }),
+                    );
+                }
+                updates.push(
+                    this.prisma.deliveryPoint.updateMany({
+                        where: { syncedAt: { lt: startedAt } },
+                        data: { isActive: false },
+                    }),
+                );
+                await this.prisma.$transaction(updates);
                 this.logger.log(`Пункты выдачи Ozon обновлены: ${total}`);
                 return;
             }
+            if (seenCursors.has(list.nextCursor) || list.points.length === 0) {
+                throw new Error(
+                    "Ozon вернул незавершённый список пунктов выдачи",
+                );
+            }
+            seenCursors.add(list.nextCursor);
             cursor = list.nextCursor;
         }
-        this.logger.error(
+        throw new Error(
             "Обход пунктов выдачи Ozon прерван: слишком много страниц",
         );
     }
@@ -127,19 +157,22 @@ export class DeliveryPointService
     private available() {
         return {
             isActive: true,
-            shipmentMethodIds: { has: this.ozon.shipmentMethodId ?? 0 },
+            shipmentMethodIds: { has: BigInt(this.ozon.shipmentMethodId ?? 0) },
         };
     }
 
     // Каждое слово запроса должно встретиться в названии или адресе пункта
-    search(query: string) {
+    async search(query: string) {
+        if (!this.ozon.isConfigured) {
+            throw new ServiceUnavailableException("Доставка Ozon не настроена");
+        }
         const words = query
             .split(/\s+/)
             .filter(Boolean)
             .slice(0, MAX_SEARCH_WORDS);
         if (words.length === 0) return Promise.resolve([]);
 
-        return this.prisma.deliveryPoint.findMany({
+        const points = await this.prisma.deliveryPoint.findMany({
             where: {
                 ...this.available(),
                 AND: words.map((word) => ({
@@ -163,12 +196,19 @@ export class DeliveryPointService
             orderBy: { address: "asc" },
             take: SEARCH_LIMIT,
         });
+        if (points.length === 0 && this.syncing) {
+            throw new ServiceUnavailableException(
+                "Список пунктов выдачи обновляется. Повторите поиск через минуту",
+            );
+        }
+        return points.map((point) => ({ ...point, id: Number(point.id) }));
     }
 
-    findAvailable(id: number) {
-        return this.prisma.deliveryPoint.findFirst({
-            where: { id, ...this.available() },
+    async findAvailable(id: number) {
+        const point = await this.prisma.deliveryPoint.findFirst({
+            where: { id: BigInt(id), ...this.available() },
             select: { id: true, name: true, address: true },
         });
+        return point ? { ...point, id: Number(point.id) } : null;
     }
 }

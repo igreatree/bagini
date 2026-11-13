@@ -73,14 +73,18 @@ describe("DeliveryPointService", () => {
             expect(
                 ozon.listPoints.mock.calls.map(([cursor]) => cursor),
             ).toEqual([null, "c1"]);
-            const upserts = prisma.$transaction.mock.calls.flatMap(
-                ([list]) => list,
-            );
-            expect(upserts.map((upsert) => upsert.where.id)).toEqual([1, 2, 3]);
+            const upserts = prisma.$transaction.mock.calls
+                .flatMap(([list]) => list)
+                .filter((operation) => operation?.where?.id !== undefined);
+            expect(upserts.map((upsert) => upsert.where.id)).toEqual([
+                1n,
+                2n,
+                3n,
+            ]);
             expect(upserts[0].create).toMatchObject({
-                id: 1,
+                id: 1n,
                 address: "Москва, улица 1",
-                shipmentMethodIds: [77],
+                shipmentMethodIds: [77n],
                 isActive: true,
             });
         });
@@ -112,10 +116,12 @@ describe("DeliveryPointService", () => {
                 ],
             });
 
-            await service.sync();
+            await expect(service.sync()).rejects.toThrow(
+                "незавершённый список",
+            );
 
             expect(ozon.listPoints).toHaveBeenCalledTimes(2);
-            expect(prisma.deliveryPoint.updateMany).toHaveBeenCalled();
+            expect(prisma.deliveryPoint.updateMany).not.toHaveBeenCalled();
         });
     });
 
@@ -164,6 +170,20 @@ describe("DeliveryPointService", () => {
     });
 
     describe("search", () => {
+        it("uses the real int64 shipment method ID without overflow", async () => {
+            const { service, prisma, ozon } = build();
+            ozon.shipmentMethodId = 1020005036837360;
+            prisma.deliveryPoint.findMany.mockResolvedValue([
+                { id: 555n, name: "Ozon", address: "Москва" },
+            ] as never);
+            const points = await service.search("Москва");
+            expect(
+                prisma.deliveryPoint.findMany.mock.calls[0][0].where
+                    .shipmentMethodIds,
+            ).toEqual({ has: 1020005036837360n });
+            expect(JSON.parse(JSON.stringify(points))[0].id).toBe(555);
+        });
+
         it("requires every word in the name or address of an open point", async () => {
             const { service, prisma } = build();
 
@@ -172,7 +192,7 @@ describe("DeliveryPointService", () => {
             const { where, take } =
                 prisma.deliveryPoint.findMany.mock.calls[0][0];
             expect(where.isActive).toBe(true);
-            expect(where.shipmentMethodIds).toEqual({ has: 77 });
+            expect(where.shipmentMethodIds).toEqual({ has: 77n });
             expect(where.AND).toHaveLength(2);
             expect(where.AND[1].OR[0]).toEqual({
                 address: { contains: "тверская", mode: "insensitive" },
@@ -197,9 +217,9 @@ describe("DeliveryPointService", () => {
             expect(prisma.deliveryPoint.findFirst).toHaveBeenCalledWith(
                 expect.objectContaining({
                     where: {
-                        id: 555,
+                        id: 555n,
                         isActive: true,
-                        shipmentMethodIds: { has: 77 },
+                        shipmentMethodIds: { has: 77n },
                     },
                 }),
             );

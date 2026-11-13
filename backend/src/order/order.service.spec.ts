@@ -5,6 +5,7 @@ jest.mock("../catalog/catalog.service", () => ({ CatalogService: class {} }));
 jest.mock("../sheet/sheet.service", () => ({ SheetService: class {} }));
 jest.mock("../delivery/ozon-delivery.service", () => ({
     OzonDeliveryService: class {},
+    OzonDeliveryUncertainException: class extends Error {},
 }));
 jest.mock("../delivery/delivery-point.service", () => ({
     DeliveryPointService: class {},
@@ -12,6 +13,7 @@ jest.mock("../delivery/delivery-point.service", () => ({
 
 import { BadRequestException } from "@nestjs/common";
 import { OrderService } from "./order.service";
+import { OzonDeliveryUncertainException } from "../delivery/ozon-delivery.service";
 
 describe("OrderService.calculate", () => {
     const product = (id: string, price: number, stock: number) => ({
@@ -145,7 +147,9 @@ describe("OrderService.calculate", () => {
         it("rejects a probe together with other items", async () => {
             const { service } = build(
                 [product("1", 500, 10), product("2", 90, 10)],
-                { "offer-2": 3 },
+                {
+                    "offer-2": 3,
+                },
             );
 
             await expect(
@@ -217,7 +221,14 @@ describe("OrderService.create", () => {
         quantity: 1,
         probeOfferId: "offer-2",
     };
-    const order = { id: 7, extId: "ext", total: 0, items: [item] };
+    const order = {
+        id: 7,
+        extId: "ext",
+        total: 0,
+        items: [item],
+        status: "pending",
+        ozonPostingNumber: null,
+    };
 
     const build = (
         overrides: {
@@ -234,7 +245,10 @@ describe("OrderService.create", () => {
         const prisma = {
             order: {
                 create: overrides.create ?? jest.fn().mockResolvedValue(order),
-                update: jest.fn().mockResolvedValue(order),
+                update: jest.fn().mockImplementation(async ({ data }) => ({
+                    ...order,
+                    ...data,
+                })),
                 updateMany: jest.fn().mockResolvedValue({ count: 1 }),
                 findUniqueOrThrow: jest.fn().mockResolvedValue({
                     ...order,
@@ -257,6 +271,7 @@ describe("OrderService.create", () => {
             }),
         };
         const delivery = {
+            getPostingStatus: jest.fn().mockResolvedValue("ready_for_shipping"),
             canDeliverTo: jest
                 .fn()
                 .mockResolvedValue(overrides.canDeliverTo ?? true),
@@ -314,6 +329,82 @@ describe("OrderService.create", () => {
     };
 
     describe("with a probe", () => {
+        it("keeps the order pending until Ozon finishes asynchronous approval", async () => {
+            const { service, delivery, prisma, sheet } = build();
+            delivery.getPostingStatus.mockResolvedValue("forming");
+            await expect(service.create(42, probeDto)).resolves.toMatchObject({
+                status: "pending",
+            });
+            expect(prisma.order.update).not.toHaveBeenCalledWith(
+                expect.objectContaining({ data: { status: "confirmed" } }),
+            );
+            expect(sheet.release).not.toHaveBeenCalled();
+        });
+
+        it("preserves the limit and the saved request after a creation timeout", async () => {
+            const { service, prisma, sheet } = build({
+                createDeliveryOrder: jest
+                    .fn()
+                    .mockRejectedValue(new OzonDeliveryUncertainException()),
+            });
+            await expect(service.create(42, probeDto)).resolves.toMatchObject({
+                status: "pending",
+                ozonDeliveryRequest: { extId: "ext" },
+            });
+            expect(prisma.order.updateMany).not.toHaveBeenCalled();
+            expect(sheet.release).not.toHaveBeenCalled();
+        });
+
+        it("preserves the saved posting after an approval timeout", async () => {
+            const { service, prisma, sheet } = build({
+                approvePosting: jest
+                    .fn()
+                    .mockRejectedValue(new OzonDeliveryUncertainException()),
+            });
+            await expect(service.create(42, probeDto)).resolves.toMatchObject({
+                status: "pending",
+                ozonPostingNumber: "POST-1",
+            });
+            expect(prisma.order.updateMany).not.toHaveBeenCalled();
+            expect(sheet.release).not.toHaveBeenCalled();
+        });
+
+        it("replays the saved request on status lookup without reserving a second probe", async () => {
+            const { service, prisma, sheet, delivery } = build();
+            const saved = {
+                ...order,
+                ozonOrderId: null,
+                ozonDeliveryRequest: {
+                    id: 7,
+                    extId: "ext",
+                    phone: "79001112233",
+                    deliveryPointId: 555,
+                    description: "Пробник: Пробник",
+                },
+            };
+            Object.assign(prisma.order, {
+                findFirst: jest.fn().mockResolvedValue(saved),
+            });
+            await expect(service.findOne(42, 7)).resolves.toMatchObject({
+                status: "confirmed",
+            });
+            expect(delivery.createOrder).toHaveBeenCalledWith(
+                saved.ozonDeliveryRequest,
+            );
+            expect(sheet.reserve).not.toHaveBeenCalled();
+        });
+
+        it("cancels and releases stock after asynchronous approval fails", async () => {
+            const { service, prisma, sheet, delivery } = build();
+            delivery.getPostingStatus.mockResolvedValue("forming_failed");
+            await expect(service.create(42, probeDto)).resolves.toMatchObject({
+                status: "cancelled",
+            });
+            expect(delivery.cancelPosting).toHaveBeenCalledWith("POST-1");
+            expect(sheet.release).toHaveBeenCalledTimes(1);
+            expect(prisma.order.updateMany).toHaveBeenCalled();
+        });
+
         it("creates a free Ozon Delivery order without payment", async () => {
             const { service, prisma, sheet, ozon, delivery } = build();
 
@@ -345,13 +436,17 @@ describe("OrderService.create", () => {
                 expect.objectContaining({
                     where: { id: 7 },
                     data: {
-                        status: "confirmed",
                         ozonDeliveryNumber: "OZ-1",
                         ozonPostingNumber: "POST-1",
                     },
                 }),
             );
             expect(delivery.approvePosting).toHaveBeenCalledWith("POST-1");
+            expect(prisma.order.update).toHaveBeenLastCalledWith(
+                expect.objectContaining({
+                    data: { status: "confirmed" },
+                }),
+            );
             expect(ozon.createOrder).not.toHaveBeenCalled();
             expect(sheet.release).not.toHaveBeenCalled();
         });
@@ -457,6 +552,7 @@ describe("OrderService.create", () => {
                     .fn()
                     .mockRejectedValue(new Error("NotEnoughBalance")),
             });
+            delivery.getPostingStatus.mockResolvedValue("created");
 
             await expect(service.create(42, probeDto)).rejects.toThrow(
                 "NotEnoughBalance",
@@ -469,21 +565,39 @@ describe("OrderService.create", () => {
             expect(sheet.release).toHaveBeenCalledWith([
                 { offerId: "offer-2", quantity: 1 },
             ]);
-            expect(prisma.order.update).not.toHaveBeenCalled();
+            expect(prisma.order.update).not.toHaveBeenCalledWith(
+                expect.objectContaining({ data: { status: "confirmed" } }),
+            );
         });
 
-        it("still frees the probe when the unconfirmed posting cannot be cancelled", async () => {
-            const { service, sheet } = build({
+        it("keeps stock and the account limit when posting cancellation is uncertain", async () => {
+            const { service, sheet, prisma, delivery } = build({
                 approvePosting: jest
                     .fn()
                     .mockRejectedValue(new Error("NotEnoughBalance")),
                 cancelPosting: jest.fn().mockRejectedValue(new Error("down")),
             });
+            delivery.getPostingStatus.mockResolvedValue("created");
 
-            await expect(service.create(42, probeDto)).rejects.toThrow(
-                "NotEnoughBalance",
-            );
-            expect(sheet.release).toHaveBeenCalled();
+            await expect(service.create(42, probeDto)).resolves.toMatchObject({
+                status: "pending",
+                ozonPostingNumber: "POST-1",
+            });
+            expect(sheet.release).not.toHaveBeenCalled();
+            expect(prisma.order.updateMany).not.toHaveBeenCalled();
+        });
+
+        it("does not cancel a posting already approved by another request", async () => {
+            const { service, delivery, sheet } = build({
+                approvePosting: jest
+                    .fn()
+                    .mockRejectedValue(new Error("AlreadyApproved")),
+            });
+            await expect(service.create(42, probeDto)).resolves.toMatchObject({
+                status: "confirmed",
+            });
+            expect(delivery.cancelPosting).not.toHaveBeenCalled();
+            expect(sheet.release).not.toHaveBeenCalled();
         });
 
         it("keeps the order when it cannot be saved after the parcel was created", async () => {

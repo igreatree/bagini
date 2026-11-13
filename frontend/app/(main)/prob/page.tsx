@@ -30,7 +30,7 @@ export default function ProbesPage() {
     const [attempt, setAttempt] = useState(0);
     const [purchase, setPurchase] = useState<{
         userId: number;
-        value: ProbePurchaseType | null;
+        value: ProbePurchaseType | null | undefined;
     } | null>(null);
 
     useEffect(() => {
@@ -50,13 +50,13 @@ export default function ProbesPage() {
             if (!actual) return;
             setPurchase({
                 userId: user.id,
-                value: "purchase" in res ? res.purchase : null,
+                value: "purchase" in res ? res.purchase : undefined,
             });
         });
         return () => {
             actual = false;
         };
-    }, [user]);
+    }, [user, attempt]);
 
     // Пробник один на заказ: пока один выбран, остальные недоступны
     const probeSelected =
@@ -101,12 +101,12 @@ export default function ProbesPage() {
                         <Text size="lg" fw={500}>
                             {paid
                                 ? "Вы уже заказали пробник"
-                                : "Пробник ждёт оплаты"}
+                                : "Пробник оформляется"}
                         </Text>
                         <Text size="sm" c="dimmed" ta="center">
                             {paid
                                 ? "Пробник можно получить один раз на аккаунт"
-                                : "Оплатите заказ, чтобы получить пробник"}
+                                : "Ожидаем подтверждение Ozon. Пробник и доставка бесплатные"}
                         </Text>
                         <Button component={Link} href={`/order/${bought.id}`}>
                             К заказу
@@ -116,7 +116,12 @@ export default function ProbesPage() {
             );
         }
 
-        if (probes === null) {
+        if (
+            probes === null ||
+            (user &&
+                purchase?.userId === user.id &&
+                purchase.value === undefined)
+        ) {
             return (
                 <Center py={60}>
                     <Stack align="center" gap="xs">
@@ -162,7 +167,9 @@ export default function ProbesPage() {
                 {!bought && <ProbesBanner />}
                 <Group align="baseline">
                     <Title order={2}>Пробники</Title>
-                    <Text c="dimmed">Один пробник на аккаунт</Text>
+                    <Text c="dimmed">
+                        Бесплатно с доставкой · Один пробник на аккаунт
+                    </Text>
                 </Group>
                 {renderContent()}
             </Stack>

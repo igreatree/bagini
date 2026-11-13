@@ -15,6 +15,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV HOSTNAME="0.0.0.0"
+ENV PORT=80
 
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./

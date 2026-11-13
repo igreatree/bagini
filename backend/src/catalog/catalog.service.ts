@@ -75,14 +75,15 @@ const toProduct = (
 ): CatalogProduct | null => {
     const price = Math.round(Number(raw?.price));
     const stock = toStock(raw);
-    if (!raw?.id || !raw?.name || raw.is_archived || !(price > 0)) return null;
+    if (!raw?.id || !raw?.name || raw.is_archived) return null;
+    if (!(price > 0) && !options.ignoreStock) return null;
     if (!stock && !options.ignoreStock) return null;
 
     return {
         id: String(raw.id),
         offerId: String(raw.offer_id ?? ""),
         productName: String(raw.name),
-        price,
+        price: price > 0 ? price : 0,
         images: [
             ...new Set([
                 ...toStringList(raw.primary_image),

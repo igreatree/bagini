@@ -70,9 +70,11 @@ model Order {
     comment          String?
 
     // Пункт выдачи Ozon Доставки, номер заказа и номер отправления в ней (только для заказа с пробником)
-    deliveryPointId  Int?
+    deliveryPointId  BigInt?
     ozonDeliveryNumber String?          @unique
     ozonPostingNumber String?           @unique
+    // Сохранённый запрос для безопасного повтора после таймаута с тем же extId.
+    ozonDeliveryRequest Json?
 
     items            OrderItem[]
 
@@ -97,14 +99,14 @@ model OrderItem {
 // Справочник пунктов выдачи Ozon Доставки: API отдаёт его только целиком,
 // поиск по адресу для покупателя делаем по этой копии
 model DeliveryPoint {
-    id               Int                @id
+    id               BigInt             @id
     name             String
     address          String
     type             String?
     latitude         Float?
     longitude        Float?
     isActive         Boolean
-    shipmentMethodIds Int[]
+    shipmentMethodIds BigInt[]
 
     syncedAt         DateTime
 }

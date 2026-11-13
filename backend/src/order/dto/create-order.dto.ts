@@ -41,5 +41,6 @@ export class CreateOrderDto extends CalculateOrderDto {
     @IsOptional()
     @IsInt()
     @Min(1)
+    @Max(Number.MAX_SAFE_INTEGER)
     deliveryPointId?: number;
 }

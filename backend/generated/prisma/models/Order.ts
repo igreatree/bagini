@@ -43,7 +43,7 @@ export type OrderSumAggregateOutputType = {
   itemsTotal: number | null
   deliveryPrice: number | null
   total: number | null
-  deliveryPointId: number | null
+  deliveryPointId: bigint | null
 }
 
 export type OrderMinAggregateOutputType = {
@@ -63,7 +63,7 @@ export type OrderMinAggregateOutputType = {
   address: string | null
   postalCode: string | null
   comment: string | null
-  deliveryPointId: number | null
+  deliveryPointId: bigint | null
   ozonDeliveryNumber: string | null
   ozonPostingNumber: string | null
   createdAt: Date | null
@@ -87,7 +87,7 @@ export type OrderMaxAggregateOutputType = {
   address: string | null
   postalCode: string | null
   comment: string | null
-  deliveryPointId: number | null
+  deliveryPointId: bigint | null
   ozonDeliveryNumber: string | null
   ozonPostingNumber: string | null
   createdAt: Date | null
@@ -114,6 +114,7 @@ export type OrderCountAggregateOutputType = {
   deliveryPointId: number
   ozonDeliveryNumber: number
   ozonPostingNumber: number
+  ozonDeliveryRequest: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -208,6 +209,7 @@ export type OrderCountAggregateInputType = {
   deliveryPointId?: true
   ozonDeliveryNumber?: true
   ozonPostingNumber?: true
+  ozonDeliveryRequest?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -316,9 +318,10 @@ export type OrderGroupByOutputType = {
   address: string | null
   postalCode: string | null
   comment: string | null
-  deliveryPointId: number | null
+  deliveryPointId: bigint | null
   ozonDeliveryNumber: string | null
   ozonPostingNumber: string | null
+  ozonDeliveryRequest: runtime.JsonValue | null
   createdAt: Date
   updatedAt: Date
   _count: OrderCountAggregateOutputType | null
@@ -363,9 +366,10 @@ export type OrderWhereInput = {
   address?: Prisma.StringNullableFilter<"Order"> | string | null
   postalCode?: Prisma.StringNullableFilter<"Order"> | string | null
   comment?: Prisma.StringNullableFilter<"Order"> | string | null
-  deliveryPointId?: Prisma.IntNullableFilter<"Order"> | number | null
+  deliveryPointId?: Prisma.BigIntNullableFilter<"Order"> | bigint | number | null
   ozonDeliveryNumber?: Prisma.StringNullableFilter<"Order"> | string | null
   ozonPostingNumber?: Prisma.StringNullableFilter<"Order"> | string | null
+  ozonDeliveryRequest?: Prisma.JsonNullableFilter<"Order">
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -392,6 +396,7 @@ export type OrderOrderByWithRelationInput = {
   deliveryPointId?: Prisma.SortOrderInput | Prisma.SortOrder
   ozonDeliveryNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   ozonPostingNumber?: Prisma.SortOrderInput | Prisma.SortOrder
+  ozonDeliveryRequest?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
@@ -420,7 +425,8 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   address?: Prisma.StringNullableFilter<"Order"> | string | null
   postalCode?: Prisma.StringNullableFilter<"Order"> | string | null
   comment?: Prisma.StringNullableFilter<"Order"> | string | null
-  deliveryPointId?: Prisma.IntNullableFilter<"Order"> | number | null
+  deliveryPointId?: Prisma.BigIntNullableFilter<"Order"> | bigint | number | null
+  ozonDeliveryRequest?: Prisma.JsonNullableFilter<"Order">
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -447,6 +453,7 @@ export type OrderOrderByWithAggregationInput = {
   deliveryPointId?: Prisma.SortOrderInput | Prisma.SortOrder
   ozonDeliveryNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   ozonPostingNumber?: Prisma.SortOrderInput | Prisma.SortOrder
+  ozonDeliveryRequest?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.OrderCountOrderByAggregateInput
@@ -476,9 +483,10 @@ export type OrderScalarWhereWithAggregatesInput = {
   address?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   postalCode?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   comment?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
-  deliveryPointId?: Prisma.IntNullableWithAggregatesFilter<"Order"> | number | null
+  deliveryPointId?: Prisma.BigIntNullableWithAggregatesFilter<"Order"> | bigint | number | null
   ozonDeliveryNumber?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   ozonPostingNumber?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
+  ozonDeliveryRequest?: Prisma.JsonNullableWithAggregatesFilter<"Order">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Order"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Order"> | Date | string
 }
@@ -498,9 +506,10 @@ export type OrderCreateInput = {
   address?: string | null
   postalCode?: string | null
   comment?: string | null
-  deliveryPointId?: number | null
+  deliveryPointId?: bigint | number | null
   ozonDeliveryNumber?: string | null
   ozonPostingNumber?: string | null
+  ozonDeliveryRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutOrdersInput
@@ -524,9 +533,10 @@ export type OrderUncheckedCreateInput = {
   address?: string | null
   postalCode?: string | null
   comment?: string | null
-  deliveryPointId?: number | null
+  deliveryPointId?: bigint | number | null
   ozonDeliveryNumber?: string | null
   ozonPostingNumber?: string | null
+  ozonDeliveryRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   items?: Prisma.OrderItemUncheckedCreateNestedManyWithoutOrderInput
@@ -547,9 +557,10 @@ export type OrderUpdateInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  deliveryPointId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  deliveryPointId?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   ozonDeliveryNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ozonPostingNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ozonDeliveryRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutOrdersNestedInput
@@ -573,9 +584,10 @@ export type OrderUncheckedUpdateInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  deliveryPointId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  deliveryPointId?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   ozonDeliveryNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ozonPostingNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ozonDeliveryRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   items?: Prisma.OrderItemUncheckedUpdateManyWithoutOrderNestedInput
@@ -598,9 +610,10 @@ export type OrderCreateManyInput = {
   address?: string | null
   postalCode?: string | null
   comment?: string | null
-  deliveryPointId?: number | null
+  deliveryPointId?: bigint | number | null
   ozonDeliveryNumber?: string | null
   ozonPostingNumber?: string | null
+  ozonDeliveryRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -620,9 +633,10 @@ export type OrderUpdateManyMutationInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  deliveryPointId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  deliveryPointId?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   ozonDeliveryNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ozonPostingNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ozonDeliveryRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -644,9 +658,10 @@ export type OrderUncheckedUpdateManyInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  deliveryPointId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  deliveryPointId?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   ozonDeliveryNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ozonPostingNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ozonDeliveryRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -681,6 +696,7 @@ export type OrderCountOrderByAggregateInput = {
   deliveryPointId?: Prisma.SortOrder
   ozonDeliveryNumber?: Prisma.SortOrder
   ozonPostingNumber?: Prisma.SortOrder
+  ozonDeliveryRequest?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -816,6 +832,14 @@ export type NullableIntFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type NullableBigIntFieldUpdateOperationsInput = {
+  set?: bigint | number | null
+  increment?: bigint | number
+  decrement?: bigint | number
+  multiply?: bigint | number
+  divide?: bigint | number
+}
+
 export type OrderCreateNestedOneWithoutItemsInput = {
   create?: Prisma.XOR<Prisma.OrderCreateWithoutItemsInput, Prisma.OrderUncheckedCreateWithoutItemsInput>
   connectOrCreate?: Prisma.OrderCreateOrConnectWithoutItemsInput
@@ -845,9 +869,10 @@ export type OrderCreateWithoutUserInput = {
   address?: string | null
   postalCode?: string | null
   comment?: string | null
-  deliveryPointId?: number | null
+  deliveryPointId?: bigint | number | null
   ozonDeliveryNumber?: string | null
   ozonPostingNumber?: string | null
+  ozonDeliveryRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   items?: Prisma.OrderItemCreateNestedManyWithoutOrderInput
@@ -869,9 +894,10 @@ export type OrderUncheckedCreateWithoutUserInput = {
   address?: string | null
   postalCode?: string | null
   comment?: string | null
-  deliveryPointId?: number | null
+  deliveryPointId?: bigint | number | null
   ozonDeliveryNumber?: string | null
   ozonPostingNumber?: string | null
+  ozonDeliveryRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   items?: Prisma.OrderItemUncheckedCreateNestedManyWithoutOrderInput
@@ -923,9 +949,10 @@ export type OrderScalarWhereInput = {
   address?: Prisma.StringNullableFilter<"Order"> | string | null
   postalCode?: Prisma.StringNullableFilter<"Order"> | string | null
   comment?: Prisma.StringNullableFilter<"Order"> | string | null
-  deliveryPointId?: Prisma.IntNullableFilter<"Order"> | number | null
+  deliveryPointId?: Prisma.BigIntNullableFilter<"Order"> | bigint | number | null
   ozonDeliveryNumber?: Prisma.StringNullableFilter<"Order"> | string | null
   ozonPostingNumber?: Prisma.StringNullableFilter<"Order"> | string | null
+  ozonDeliveryRequest?: Prisma.JsonNullableFilter<"Order">
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Order"> | Date | string
 }
@@ -945,9 +972,10 @@ export type OrderCreateWithoutItemsInput = {
   address?: string | null
   postalCode?: string | null
   comment?: string | null
-  deliveryPointId?: number | null
+  deliveryPointId?: bigint | number | null
   ozonDeliveryNumber?: string | null
   ozonPostingNumber?: string | null
+  ozonDeliveryRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutOrdersInput
@@ -970,9 +998,10 @@ export type OrderUncheckedCreateWithoutItemsInput = {
   address?: string | null
   postalCode?: string | null
   comment?: string | null
-  deliveryPointId?: number | null
+  deliveryPointId?: bigint | number | null
   ozonDeliveryNumber?: string | null
   ozonPostingNumber?: string | null
+  ozonDeliveryRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1008,9 +1037,10 @@ export type OrderUpdateWithoutItemsInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  deliveryPointId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  deliveryPointId?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   ozonDeliveryNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ozonPostingNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ozonDeliveryRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutOrdersNestedInput
@@ -1033,9 +1063,10 @@ export type OrderUncheckedUpdateWithoutItemsInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  deliveryPointId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  deliveryPointId?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   ozonDeliveryNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ozonPostingNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ozonDeliveryRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1056,9 +1087,10 @@ export type OrderCreateManyUserInput = {
   address?: string | null
   postalCode?: string | null
   comment?: string | null
-  deliveryPointId?: number | null
+  deliveryPointId?: bigint | number | null
   ozonDeliveryNumber?: string | null
   ozonPostingNumber?: string | null
+  ozonDeliveryRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1078,9 +1110,10 @@ export type OrderUpdateWithoutUserInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  deliveryPointId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  deliveryPointId?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   ozonDeliveryNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ozonPostingNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ozonDeliveryRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   items?: Prisma.OrderItemUpdateManyWithoutOrderNestedInput
@@ -1102,9 +1135,10 @@ export type OrderUncheckedUpdateWithoutUserInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  deliveryPointId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  deliveryPointId?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   ozonDeliveryNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ozonPostingNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ozonDeliveryRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   items?: Prisma.OrderItemUncheckedUpdateManyWithoutOrderNestedInput
@@ -1126,9 +1160,10 @@ export type OrderUncheckedUpdateManyWithoutUserInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  deliveryPointId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  deliveryPointId?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   ozonDeliveryNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ozonPostingNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ozonDeliveryRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1184,6 +1219,7 @@ export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   deliveryPointId?: boolean
   ozonDeliveryNumber?: boolean
   ozonPostingNumber?: boolean
+  ozonDeliveryRequest?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -1211,6 +1247,7 @@ export type OrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   deliveryPointId?: boolean
   ozonDeliveryNumber?: boolean
   ozonPostingNumber?: boolean
+  ozonDeliveryRequest?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -1236,6 +1273,7 @@ export type OrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   deliveryPointId?: boolean
   ozonDeliveryNumber?: boolean
   ozonPostingNumber?: boolean
+  ozonDeliveryRequest?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -1261,11 +1299,12 @@ export type OrderSelectScalar = {
   deliveryPointId?: boolean
   ozonDeliveryNumber?: boolean
   ozonPostingNumber?: boolean
+  ozonDeliveryRequest?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "status" | "extId" | "ozonOrderId" | "paymentUrl" | "paidAt" | "probeUserId" | "itemsTotal" | "deliveryPrice" | "total" | "recipientName" | "city" | "address" | "postalCode" | "comment" | "deliveryPointId" | "ozonDeliveryNumber" | "ozonPostingNumber" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
+export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "status" | "extId" | "ozonOrderId" | "paymentUrl" | "paidAt" | "probeUserId" | "itemsTotal" | "deliveryPrice" | "total" | "recipientName" | "city" | "address" | "postalCode" | "comment" | "deliveryPointId" | "ozonDeliveryNumber" | "ozonPostingNumber" | "ozonDeliveryRequest" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
 export type OrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   items?: boolean | Prisma.Order$itemsArgs<ExtArgs>
@@ -1301,9 +1340,10 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     address: string | null
     postalCode: string | null
     comment: string | null
-    deliveryPointId: number | null
+    deliveryPointId: bigint | null
     ozonDeliveryNumber: string | null
     ozonPostingNumber: string | null
+    ozonDeliveryRequest: runtime.JsonValue | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["order"]>
@@ -1747,9 +1787,10 @@ export interface OrderFieldRefs {
   readonly address: Prisma.FieldRef<"Order", 'String'>
   readonly postalCode: Prisma.FieldRef<"Order", 'String'>
   readonly comment: Prisma.FieldRef<"Order", 'String'>
-  readonly deliveryPointId: Prisma.FieldRef<"Order", 'Int'>
+  readonly deliveryPointId: Prisma.FieldRef<"Order", 'BigInt'>
   readonly ozonDeliveryNumber: Prisma.FieldRef<"Order", 'String'>
   readonly ozonPostingNumber: Prisma.FieldRef<"Order", 'String'>
+  readonly ozonDeliveryRequest: Prisma.FieldRef<"Order", 'Json'>
   readonly createdAt: Prisma.FieldRef<"Order", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Order", 'DateTime'>
 }

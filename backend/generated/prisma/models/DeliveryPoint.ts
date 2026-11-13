@@ -34,14 +34,14 @@ export type DeliveryPointAvgAggregateOutputType = {
 }
 
 export type DeliveryPointSumAggregateOutputType = {
-  id: number | null
+  id: bigint | null
   latitude: number | null
   longitude: number | null
-  shipmentMethodIds: number[]
+  shipmentMethodIds: bigint[]
 }
 
 export type DeliveryPointMinAggregateOutputType = {
-  id: number | null
+  id: bigint | null
   name: string | null
   address: string | null
   type: string | null
@@ -52,7 +52,7 @@ export type DeliveryPointMinAggregateOutputType = {
 }
 
 export type DeliveryPointMaxAggregateOutputType = {
-  id: number | null
+  id: bigint | null
   name: string | null
   address: string | null
   type: string | null
@@ -212,14 +212,14 @@ export type DeliveryPointGroupByArgs<ExtArgs extends runtime.Types.Extensions.In
 }
 
 export type DeliveryPointGroupByOutputType = {
-  id: number
+  id: bigint
   name: string
   address: string
   type: string | null
   latitude: number | null
   longitude: number | null
   isActive: boolean
-  shipmentMethodIds: number[]
+  shipmentMethodIds: bigint[]
   syncedAt: Date
   _count: DeliveryPointCountAggregateOutputType | null
   _avg: DeliveryPointAvgAggregateOutputType | null
@@ -247,14 +247,14 @@ export type DeliveryPointWhereInput = {
   AND?: Prisma.DeliveryPointWhereInput | Prisma.DeliveryPointWhereInput[]
   OR?: Prisma.DeliveryPointWhereInput[]
   NOT?: Prisma.DeliveryPointWhereInput | Prisma.DeliveryPointWhereInput[]
-  id?: Prisma.IntFilter<"DeliveryPoint"> | number
+  id?: Prisma.BigIntFilter<"DeliveryPoint"> | bigint | number
   name?: Prisma.StringFilter<"DeliveryPoint"> | string
   address?: Prisma.StringFilter<"DeliveryPoint"> | string
   type?: Prisma.StringNullableFilter<"DeliveryPoint"> | string | null
   latitude?: Prisma.FloatNullableFilter<"DeliveryPoint"> | number | null
   longitude?: Prisma.FloatNullableFilter<"DeliveryPoint"> | number | null
   isActive?: Prisma.BoolFilter<"DeliveryPoint"> | boolean
-  shipmentMethodIds?: Prisma.IntNullableListFilter<"DeliveryPoint">
+  shipmentMethodIds?: Prisma.BigIntNullableListFilter<"DeliveryPoint">
   syncedAt?: Prisma.DateTimeFilter<"DeliveryPoint"> | Date | string
 }
 
@@ -271,7 +271,7 @@ export type DeliveryPointOrderByWithRelationInput = {
 }
 
 export type DeliveryPointWhereUniqueInput = Prisma.AtLeast<{
-  id?: number
+  id?: bigint | number
   AND?: Prisma.DeliveryPointWhereInput | Prisma.DeliveryPointWhereInput[]
   OR?: Prisma.DeliveryPointWhereInput[]
   NOT?: Prisma.DeliveryPointWhereInput | Prisma.DeliveryPointWhereInput[]
@@ -281,7 +281,7 @@ export type DeliveryPointWhereUniqueInput = Prisma.AtLeast<{
   latitude?: Prisma.FloatNullableFilter<"DeliveryPoint"> | number | null
   longitude?: Prisma.FloatNullableFilter<"DeliveryPoint"> | number | null
   isActive?: Prisma.BoolFilter<"DeliveryPoint"> | boolean
-  shipmentMethodIds?: Prisma.IntNullableListFilter<"DeliveryPoint">
+  shipmentMethodIds?: Prisma.BigIntNullableListFilter<"DeliveryPoint">
   syncedAt?: Prisma.DateTimeFilter<"DeliveryPoint"> | Date | string
 }, "id">
 
@@ -306,106 +306,106 @@ export type DeliveryPointScalarWhereWithAggregatesInput = {
   AND?: Prisma.DeliveryPointScalarWhereWithAggregatesInput | Prisma.DeliveryPointScalarWhereWithAggregatesInput[]
   OR?: Prisma.DeliveryPointScalarWhereWithAggregatesInput[]
   NOT?: Prisma.DeliveryPointScalarWhereWithAggregatesInput | Prisma.DeliveryPointScalarWhereWithAggregatesInput[]
-  id?: Prisma.IntWithAggregatesFilter<"DeliveryPoint"> | number
+  id?: Prisma.BigIntWithAggregatesFilter<"DeliveryPoint"> | bigint | number
   name?: Prisma.StringWithAggregatesFilter<"DeliveryPoint"> | string
   address?: Prisma.StringWithAggregatesFilter<"DeliveryPoint"> | string
   type?: Prisma.StringNullableWithAggregatesFilter<"DeliveryPoint"> | string | null
   latitude?: Prisma.FloatNullableWithAggregatesFilter<"DeliveryPoint"> | number | null
   longitude?: Prisma.FloatNullableWithAggregatesFilter<"DeliveryPoint"> | number | null
   isActive?: Prisma.BoolWithAggregatesFilter<"DeliveryPoint"> | boolean
-  shipmentMethodIds?: Prisma.IntNullableListFilter<"DeliveryPoint">
+  shipmentMethodIds?: Prisma.BigIntNullableListFilter<"DeliveryPoint">
   syncedAt?: Prisma.DateTimeWithAggregatesFilter<"DeliveryPoint"> | Date | string
 }
 
 export type DeliveryPointCreateInput = {
-  id: number
+  id: bigint | number
   name: string
   address: string
   type?: string | null
   latitude?: number | null
   longitude?: number | null
   isActive: boolean
-  shipmentMethodIds?: Prisma.DeliveryPointCreateshipmentMethodIdsInput | number[]
+  shipmentMethodIds?: Prisma.DeliveryPointCreateshipmentMethodIdsInput | bigint[] | number[]
   syncedAt: Date | string
 }
 
 export type DeliveryPointUncheckedCreateInput = {
-  id: number
+  id: bigint | number
   name: string
   address: string
   type?: string | null
   latitude?: number | null
   longitude?: number | null
   isActive: boolean
-  shipmentMethodIds?: Prisma.DeliveryPointCreateshipmentMethodIdsInput | number[]
+  shipmentMethodIds?: Prisma.DeliveryPointCreateshipmentMethodIdsInput | bigint[] | number[]
   syncedAt: Date | string
 }
 
 export type DeliveryPointUpdateInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
   address?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  shipmentMethodIds?: Prisma.DeliveryPointUpdateshipmentMethodIdsInput | number[]
+  shipmentMethodIds?: Prisma.DeliveryPointUpdateshipmentMethodIdsInput | bigint[] | number[]
   syncedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type DeliveryPointUncheckedUpdateInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
   address?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  shipmentMethodIds?: Prisma.DeliveryPointUpdateshipmentMethodIdsInput | number[]
+  shipmentMethodIds?: Prisma.DeliveryPointUpdateshipmentMethodIdsInput | bigint[] | number[]
   syncedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type DeliveryPointCreateManyInput = {
-  id: number
+  id: bigint | number
   name: string
   address: string
   type?: string | null
   latitude?: number | null
   longitude?: number | null
   isActive: boolean
-  shipmentMethodIds?: Prisma.DeliveryPointCreateshipmentMethodIdsInput | number[]
+  shipmentMethodIds?: Prisma.DeliveryPointCreateshipmentMethodIdsInput | bigint[] | number[]
   syncedAt: Date | string
 }
 
 export type DeliveryPointUpdateManyMutationInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
   address?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  shipmentMethodIds?: Prisma.DeliveryPointUpdateshipmentMethodIdsInput | number[]
+  shipmentMethodIds?: Prisma.DeliveryPointUpdateshipmentMethodIdsInput | bigint[] | number[]
   syncedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type DeliveryPointUncheckedUpdateManyInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
   address?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  shipmentMethodIds?: Prisma.DeliveryPointUpdateshipmentMethodIdsInput | number[]
+  shipmentMethodIds?: Prisma.DeliveryPointUpdateshipmentMethodIdsInput | bigint[] | number[]
   syncedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type IntNullableListFilter<$PrismaModel = never> = {
-  equals?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel> | null
-  has?: number | Prisma.IntFieldRefInput<$PrismaModel> | null
-  hasEvery?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel>
-  hasSome?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel>
+export type BigIntNullableListFilter<$PrismaModel = never> = {
+  equals?: bigint[] | number[] | Prisma.ListBigIntFieldRefInput<$PrismaModel> | null
+  has?: bigint | number | Prisma.BigIntFieldRefInput<$PrismaModel> | null
+  hasEvery?: bigint[] | number[] | Prisma.ListBigIntFieldRefInput<$PrismaModel>
+  hasSome?: bigint[] | number[] | Prisma.ListBigIntFieldRefInput<$PrismaModel>
   isEmpty?: boolean
 }
 
@@ -458,7 +458,15 @@ export type DeliveryPointSumOrderByAggregateInput = {
 }
 
 export type DeliveryPointCreateshipmentMethodIdsInput = {
-  set: number[]
+  set: bigint[] | number[]
+}
+
+export type BigIntFieldUpdateOperationsInput = {
+  set?: bigint | number
+  increment?: bigint | number
+  decrement?: bigint | number
+  multiply?: bigint | number
+  divide?: bigint | number
 }
 
 export type NullableFloatFieldUpdateOperationsInput = {
@@ -474,8 +482,8 @@ export type BoolFieldUpdateOperationsInput = {
 }
 
 export type DeliveryPointUpdateshipmentMethodIdsInput = {
-  set?: number[]
-  push?: number | number[]
+  set?: bigint[] | number[]
+  push?: bigint | number | bigint[] | number[]
 }
 
 
@@ -534,14 +542,14 @@ export type $DeliveryPointPayload<ExtArgs extends runtime.Types.Extensions.Inter
   name: "DeliveryPoint"
   objects: {}
   scalars: runtime.Types.Extensions.GetPayloadResult<{
-    id: number
+    id: bigint
     name: string
     address: string
     type: string | null
     latitude: number | null
     longitude: number | null
     isActive: boolean
-    shipmentMethodIds: number[]
+    shipmentMethodIds: bigint[]
     syncedAt: Date
   }, ExtArgs["result"]["deliveryPoint"]>
   composites: {}
@@ -966,14 +974,14 @@ export interface Prisma__DeliveryPointClient<T, Null = never, ExtArgs extends ru
  * Fields of the DeliveryPoint model
  */
 export interface DeliveryPointFieldRefs {
-  readonly id: Prisma.FieldRef<"DeliveryPoint", 'Int'>
+  readonly id: Prisma.FieldRef<"DeliveryPoint", 'BigInt'>
   readonly name: Prisma.FieldRef<"DeliveryPoint", 'String'>
   readonly address: Prisma.FieldRef<"DeliveryPoint", 'String'>
   readonly type: Prisma.FieldRef<"DeliveryPoint", 'String'>
   readonly latitude: Prisma.FieldRef<"DeliveryPoint", 'Float'>
   readonly longitude: Prisma.FieldRef<"DeliveryPoint", 'Float'>
   readonly isActive: Prisma.FieldRef<"DeliveryPoint", 'Boolean'>
-  readonly shipmentMethodIds: Prisma.FieldRef<"DeliveryPoint", 'Int[]'>
+  readonly shipmentMethodIds: Prisma.FieldRef<"DeliveryPoint", 'BigInt[]'>
   readonly syncedAt: Prisma.FieldRef<"DeliveryPoint", 'DateTime'>
 }
     

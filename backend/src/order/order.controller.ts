@@ -16,6 +16,17 @@ import { JwtCookieAuthGuard } from "../auth/guards/jwtCookie-auth.guard";
 export class OrderController {
     constructor(private readonly orderService: OrderService) {}
 
+    // BigInt хранится в PostgreSQL; наружу отдаём JSON-совместимый ID.
+    private serialize<T extends { deliveryPointId: bigint | null }>(order: T) {
+        return {
+            ...order,
+            deliveryPointId:
+                order.deliveryPointId === null
+                    ? null
+                    : Number(order.deliveryPointId),
+        };
+    }
+
     @Post("calculate")
     async calculate(@Body() dto: CalculateOrderDto) {
         const { itemsTotal, total } = await this.orderService.calculate(
@@ -28,14 +39,14 @@ export class OrderController {
     @Post()
     async create(@Request() req, @Body() dto: CreateOrderDto) {
         const order = await this.orderService.create(req.user.id, dto);
-        return { order };
+        return { order: this.serialize(order) };
     }
 
     @UseGuards(JwtCookieAuthGuard)
     @Get()
     async findAll(@Request() req) {
         const orders = await this.orderService.findAll(req.user.id);
-        return { orders };
+        return { orders: orders.map((order) => this.serialize(order)) };
     }
 
     // Объявлен до :id, иначе "probe" будет принят за номер заказа
@@ -50,6 +61,6 @@ export class OrderController {
     @Get(":id")
     async findOne(@Request() req, @Param("id", ParseIntPipe) id: number) {
         const order = await this.orderService.findOne(req.user.id, id);
-        return { order };
+        return { order: this.serialize(order) };
     }
 }
