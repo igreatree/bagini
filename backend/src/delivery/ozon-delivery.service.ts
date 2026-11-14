@@ -516,7 +516,7 @@ export class OzonDeliveryService {
     async checkoutOrder(order: {
         phone: string;
         deliveryPointId: number;
-    }): Promise<{ cutoffAt?: string }> {
+    }): Promise<void> {
         const data = await this.post("/v1/order/checkout", {
             recipient: {
                 phone_number: toOzonPhone(order.phone),
@@ -541,8 +541,8 @@ export class OzonDeliveryService {
                 "Ozon не вернул расчёт доставки. Повторите позже",
             );
         }
-        const cutoffAt = result.posting.cutoff_at;
-        return typeof cutoffAt === "string" ? { cutoffAt } : {};
+        // Без плановой отгрузки cutoff_at не передаём ни в checkout, ни в create:
+        // время из ответа checkout уже может быть в прошлом к следующему запросу.
     }
 
     // extId заказа — UUID, он же Idempotency-Key: повторный запрос не создаст второй заказ.
@@ -553,7 +553,6 @@ export class OzonDeliveryService {
         recipientName?: string;
         deliveryPointId: number;
         description: string;
-        cutoffAt?: string;
     }): Promise<{ orderNumber: string; postingNumber: string }> {
         const data = await this.post(
             "/v1/order/create",
@@ -573,9 +572,6 @@ export class OzonDeliveryService {
                 postings: [
                     {
                         ...this.posting,
-                        ...(order.cutoffAt
-                            ? { cutoff_at: order.cutoffAt }
-                            : {}),
                         posting_external_id: String(order.id),
                         description: order.description.slice(0, 500),
                     },

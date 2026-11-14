@@ -343,24 +343,20 @@ describe("OrderService.create", () => {
             expect(delivery.createOrder).not.toHaveBeenCalled();
         });
 
-        it("saves and uses the shipping cutoff returned by checkout", async () => {
+        it("does not save or reuse the time returned by checkout", async () => {
             const { service, delivery, prisma } = build();
             delivery.checkoutOrder.mockResolvedValue({
                 cutoffAt: "2026-11-15T12:00:00Z",
             } as never);
             await service.create(42, probeDto);
-            expect(delivery.createOrder).toHaveBeenCalledWith(
-                expect.objectContaining({ cutoffAt: "2026-11-15T12:00:00Z" }),
+            expect(delivery.createOrder.mock.calls[0][0]).not.toHaveProperty(
+                "cutoffAt",
             );
-            expect(prisma.order.update).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    data: {
-                        ozonDeliveryRequest: expect.objectContaining({
-                            cutoffAt: "2026-11-15T12:00:00Z",
-                        }),
-                    },
-                }),
-            );
+            const savedRequest = prisma.order.update.mock.calls.find(
+                ([query]) => query.data.ozonDeliveryRequest,
+            )?.[0].data.ozonDeliveryRequest;
+            expect(savedRequest).toBeDefined();
+            expect(savedRequest).not.toHaveProperty("cutoffAt");
         });
 
         it("keeps the order pending until Ozon finishes asynchronous approval", async () => {

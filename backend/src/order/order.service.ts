@@ -220,7 +220,7 @@ export class OrderService {
             [user.name, user.lastName].filter(Boolean).join(" ") || undefined;
         // check-availability проверяет ограничения ПВЗ, но не расчёт тарифа.
         // Ошибку расчёта получаем до создания заказа и списания пробника.
-        const quote = await this.delivery.checkoutOrder({
+        await this.delivery.checkoutOrder({
             phone: user.phone,
             deliveryPointId: point.id,
         });
@@ -272,7 +272,6 @@ export class OrderService {
                     recipientName,
                     deliveryPointId: point.id,
                     description: `Пробник: ${probe.productName}`,
-                    ...(quote.cutoffAt ? { cutoffAt: quote.cutoffAt } : {}),
                 },
             },
             include: { items: true },

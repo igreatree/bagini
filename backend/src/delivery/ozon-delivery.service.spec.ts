@@ -411,17 +411,55 @@ describe("OzonDeliveryService", () => {
             expect(posting.declared_value.amount).toBe("10");
         });
 
-        it("passes the checkout cutoff to order creation", async () => {
-            const { service, apiCalls } = build({
-                "/v1/order/create": [ok(created)],
-            });
-            await service.createOrder({
-                ...order,
-                cutoffAt: "2026-11-15T12:00:00Z",
-            });
-            expect(apiCalls()[0][1].postings[0].cutoff_at).toBe(
-                "2026-11-15T12:00:00Z",
-            );
+        it.each(["2026-01-01T12:00:00Z", "2099-01-01T12:00:00Z"])(
+            "ignores a legacy saved cutoff %s when creating an order",
+            async (cutoffAt) => {
+                const { service, apiCalls } = build({
+                    "/v1/order/create": [ok(created)],
+                });
+                const legacyRequest = { ...order, cutoffAt };
+                await service.createOrder(legacyRequest);
+                expect(apiCalls()[0][1].postings[0]).not.toHaveProperty(
+                    "cutoff_at",
+                );
+            },
+        );
+
+        it("does not reuse checkout time after stock reservation delays order creation", async () => {
+            const now = Date.parse("2026-11-14T12:00:00Z");
+            const clock = jest.spyOn(Date, "now").mockReturnValue(now);
+            try {
+                const { service, apiCalls } = build({
+                    "/v1/order/checkout": [
+                        ok({
+                            results: [
+                                {
+                                    request_id: 1,
+                                    posting: {
+                                        cutoff_at: new Date(now).toISOString(),
+                                    },
+                                },
+                            ],
+                        }),
+                    ],
+                    "/v1/order/create": [ok(created)],
+                });
+                await service.checkoutOrder({
+                    phone: order.phone,
+                    deliveryPointId: order.deliveryPointId,
+                });
+                clock.mockReturnValue(now + 15_000);
+                await service.createOrder(order);
+                expect(apiCalls().map((call) => call[0])).toEqual([
+                    `${API}/v1/order/checkout`,
+                    `${API}/v1/order/create`,
+                ]);
+                for (const [, body] of apiCalls()) {
+                    expect(body.postings[0]).not.toHaveProperty("cutoff_at");
+                }
+            } finally {
+                clock.mockRestore();
+            }
         });
 
         it("repeats the request with the same key after a network error", async () => {
@@ -523,7 +561,7 @@ describe("OzonDeliveryService", () => {
             });
             expect(JSON.stringify(result)).not.toContain(recipient.phone);
         });
-        it("calculates the parcel before creation and returns the Ozon cutoff", async () => {
+        it("validates checkout without forwarding the returned cutoff", async () => {
             const { service, apiCalls } = build({
                 "/v1/order/checkout": [
                     ok({
@@ -536,9 +574,9 @@ describe("OzonDeliveryService", () => {
                     }),
                 ],
             });
-            await expect(service.checkoutOrder(recipient)).resolves.toEqual({
-                cutoffAt: "2026-11-15T12:00:00Z",
-            });
+            await expect(
+                service.checkoutOrder(recipient),
+            ).resolves.toBeUndefined();
             expect(apiCalls()[0][1]).toMatchObject({
                 recipient: { phone_number: "+79001112233" },
                 delivery: { delivery_point: { delivery_point_id: 10 } },
