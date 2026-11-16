@@ -1,12 +1,12 @@
 "use client";
 
 import { formatPriceLabel } from "@/helpers";
-import { useUserStore } from "@/store/user";
 import { IProductCard } from "@/types";
-import { Card, Badge, Button, Text, Stack, Center } from "@mantine/core";
-import { IconBasket, IconCheck, IconPhoto } from "@tabler/icons-react";
+import { Card, Badge, Text, Stack, Center } from "@mantine/core";
+import { IconPhoto } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { ProductCartControls } from "../ProductCartControls";
 
 export const ProductCard = ({
     productName,
@@ -14,10 +14,9 @@ export const ProductCard = ({
     price,
     images,
     probe,
+    stock,
     disabled,
 }: IProductCard & { disabled?: boolean }) => {
-    const { basket, updateBasket } = useUserStore();
-    const inBasket = basket.find((item) => item.id === id);
     const router = useRouter();
 
     return (
@@ -27,7 +26,7 @@ export const ProductCard = ({
             bg="#ffffff9c"
             onClick={(e) => {
                 // Клик по кнопке, в том числе недоступной, карточку не открывает
-                if ((e.target as HTMLElement).closest("button")) return;
+                if ((e.target as HTMLElement).closest("button, a")) return;
                 router.push(`/product/${id}`);
             }}
             style={{ display: "flex", flexDirection: "column" }}
@@ -67,21 +66,16 @@ export const ProductCard = ({
                     {productName}
                 </Text>
 
-                <Button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        updateBasket(id);
-                    }}
-                    leftSection={inBasket ? <IconCheck /> : <IconBasket />}
-                    // Товар из корзины всегда можно убрать, даже когда остальные недоступны
-                    disabled={disabled && !inBasket}
-                    fullWidth
-                    px="xs"
-                    mt="auto"
-                    variant={inBasket ? "outline" : "filled"}
-                >
+                <Text fw={700} size="lg" mt="auto">
                     {formatPriceLabel(price)}
-                </Button>
+                </Text>
+                <ProductCartControls
+                    id={id}
+                    productName={productName}
+                    stock={stock}
+                    probe={probe}
+                    disabled={disabled}
+                />
             </Stack>
         </Card>
     );

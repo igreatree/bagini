@@ -39,7 +39,7 @@ export interface IProduct {
 
 export type IProductCard = Pick<
     IProduct,
-    "productName" | "price" | "images" | "id" | "probe"
+    "productName" | "price" | "images" | "id" | "probe" | "stock"
 >;
 
 export type ProductsPageType = {

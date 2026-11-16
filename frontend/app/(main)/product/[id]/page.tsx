@@ -15,22 +15,17 @@ import {
     Paper,
     Divider,
     UnstyledButton,
-    NumberInput,
     Skeleton,
     Center,
 } from "@mantine/core";
-import {
-    IconBasket,
-    IconCheck,
-    IconChevronLeft,
-    IconPhoto,
-} from "@tabler/icons-react";
+import { IconChevronLeft, IconPhoto } from "@tabler/icons-react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { getProduct } from "@/api/product";
+import { ProductCartControls } from "@/components/ProductCartControls";
 
 export default function ProductPage() {
-    const { basket, updateBasket, basketQuantityChange } = useUserStore();
+    const { basket } = useUserStore();
     const router = useRouter();
     const [activeImage, setActiveImage] = useState(0);
     const [loaded, setLoaded] = useState<{
@@ -54,12 +49,6 @@ export default function ProductPage() {
             actual = false;
         };
     }, [productId]);
-
-    const handleQuantityChange = (id: string, value: number | string) => {
-        const quantity = Number(value);
-        if (!quantity || quantity < 1) return;
-        basketQuantityChange(id, quantity);
-    };
 
     const backButton = (
         <Button
@@ -199,48 +188,14 @@ export default function ProductPage() {
                         <Divider my="sm" />
 
                         <Group justify="space-between" align="center">
-                            {inBasket && (
-                                <Group
-                                    justify="space-between"
-                                    align="center"
-                                    mt="xs"
-                                >
-                                    <NumberInput
-                                        value={inBasket.count}
-                                        onChange={(value) =>
-                                            handleQuantityChange(
-                                                product.id,
-                                                value,
-                                            )
-                                        }
-                                        min={1}
-                                        max={Math.min(99, product.stock)}
-                                        w={90}
-                                        size="md"
-                                    />
-                                    <Text fw={700} size="xl">
-                                        {formatPriceLabel(
-                                            product.price * inBasket.count,
-                                        )}
-                                    </Text>
-                                </Group>
-                            )}
-                            {!inBasket && (
-                                <Text fw={700} size="xl">
-                                    {formatPriceLabel(product.price)}
-                                </Text>
-                            )}
-
-                            <Button
-                                onClick={() => updateBasket(product.id)}
-                                leftSection={
-                                    inBasket ? <IconCheck /> : <IconBasket />
-                                }
-                                variant={inBasket ? "outline" : "filled"}
-                                size="md"
-                            >
-                                {inBasket ? "В корзине" : "В корзину"}
-                            </Button>
+                            <Text fw={700} size="xl">
+                                {formatPriceLabel(
+                                    product.price * (inBasket?.count ?? 1),
+                                )}
+                            </Text>
+                            <Stack w={{ base: "100%", sm: 260 }}>
+                                <ProductCartControls {...product} />
+                            </Stack>
                         </Group>
                     </Stack>
                 </Grid.Col>
