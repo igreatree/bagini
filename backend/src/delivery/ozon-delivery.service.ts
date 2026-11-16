@@ -25,6 +25,9 @@ const DEFAULT_TOKEN_TTL_SECONDS = 5 * 60;
 // его нужно повторить по Location с этой cookie. Больше нескольких подряд — уже ошибка.
 const MAX_REDIRECTS = 3;
 const CURRENCY_RUB = "RUB";
+// Номер уже может быть выдан order/create, пока posting/approve его ещё не находит.
+// Повторяем только явный posting_not_found, не создавая второе отправление.
+const POSTING_APPROVAL_RETRY_DELAYS_MS = [500, 1500, 3000];
 
 // Габариты и оценочная стоимость посылки с пробником. Расчёт Ozon для нашего
 // способа отгрузки проходит со 100 ₽; с 1 ₽ возвращает delivery_calculation_error.
@@ -377,6 +380,7 @@ export class OzonDeliveryService {
     ) {
         let retries = options.idempotencyKey ? 1 : 0;
         let reauthorized = false;
+        let postingRetries = 0;
         for (;;) {
             try {
                 const response = await this.send(
@@ -402,6 +406,26 @@ export class OzonDeliveryService {
                     continue;
                 }
                 if (error instanceof InternalServerErrorException) throw error;
+                const postingNotFound =
+                    path === "/v1/posting/approve" &&
+                    [400, 404].includes(error?.response?.status) &&
+                    errorCode(error.response.data)
+                        ?.replace(/_/g, "")
+                        .toLowerCase() === "postingnotfound";
+                if (
+                    postingNotFound &&
+                    postingRetries < POSTING_APPROVAL_RETRY_DELAYS_MS.length
+                ) {
+                    const delayMs =
+                        POSTING_APPROVAL_RETRY_DELAYS_MS[postingRetries++];
+                    this.logger.warn(
+                        `Ozon ещё не находит отправление при подтверждении; повтор ${postingRetries} через ${delayMs} мс, trace_id=${error.response.headers?.["x-o3-trace-id"] ?? "unknown"}`,
+                    );
+                    await new Promise((resolve) =>
+                        setTimeout(resolve, delayMs),
+                    );
+                    continue;
+                }
                 if (
                     path === "/v1/delivery-point/info" &&
                     error?.response?.status === 404
@@ -414,12 +438,13 @@ export class OzonDeliveryService {
                     `Ozon Delivery ${path} failed: ${error?.message} trace_id=${error?.response?.headers?.["x-o3-trace-id"] ?? "unknown"} ${JSON.stringify(error?.response?.data)}`,
                 );
                 if (
-                    isAmbiguous(error) &&
-                    [
-                        "/v1/order/create",
-                        "/v1/posting/approve",
-                        "/v1/posting/cancel",
-                    ].includes(path)
+                    postingNotFound ||
+                    (isAmbiguous(error) &&
+                        [
+                            "/v1/order/create",
+                            "/v1/posting/approve",
+                            "/v1/posting/cancel",
+                        ].includes(path))
                 )
                     throw new OzonDeliveryUncertainException();
                 throw deliveryError(
@@ -582,7 +607,15 @@ export class OzonDeliveryService {
 
         // По номеру отправления его подтверждают, отменяют и получают этикетку
         const orderNumber = data?.order_number;
-        const postingNumber = data?.postings?.[0]?.posting_number;
+        const postings: any[] = Array.isArray(data?.postings)
+            ? data.postings
+            : [];
+        const posting =
+            postings.find(
+                (posting: any) =>
+                    Number(posting.request_id) === this.posting.request_id,
+            ) ?? (postings.length === 1 ? postings[0] : undefined);
+        const postingNumber = posting?.posting_number;
         if (
             typeof orderNumber !== "string" ||
             !orderNumber ||
@@ -594,6 +627,9 @@ export class OzonDeliveryService {
             );
             throw new OzonDeliveryUncertainException();
         }
+        this.logger.log(
+            `Ozon Delivery created: ext_id=${order.extId}, order_number=${orderNumber}, posting_number=${postingNumber}`,
+        );
         return { orderNumber, postingNumber };
     }
 

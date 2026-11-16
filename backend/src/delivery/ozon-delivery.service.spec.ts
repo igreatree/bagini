@@ -3,7 +3,10 @@ jest.mock("@nestjs/axios", () => ({ HttpService: class {} }));
 
 import { BadGatewayException, Logger } from "@nestjs/common";
 import { of, throwError } from "rxjs";
-import { OzonDeliveryService } from "./ozon-delivery.service";
+import {
+    OzonDeliveryService,
+    OzonDeliveryUncertainException,
+} from "./ozon-delivery.service";
 
 describe("OzonDeliveryService", () => {
     const env = { ...process.env };
@@ -411,6 +414,53 @@ describe("OzonDeliveryService", () => {
             expect(posting.declared_value.amount).toBe("10");
         });
 
+        it("matches the created posting by request_id instead of response position", async () => {
+            const { service } = build({
+                "/v1/order/create": [
+                    ok({
+                        order_number: "OZ-1",
+                        postings: [
+                            { request_id: 2, posting_number: "OTHER" },
+                            { request_id: 1, posting_number: "POST-1" },
+                        ],
+                    }),
+                ],
+            });
+            await expect(service.createOrder(order)).resolves.toEqual({
+                orderNumber: "OZ-1",
+                postingNumber: "POST-1",
+            });
+        });
+
+        it("accepts a single created posting without request_id", async () => {
+            const { service } = build({
+                "/v1/order/create": [
+                    ok({
+                        order_number: "OZ-1",
+                        postings: [{ posting_number: "POST-1" }],
+                    }),
+                ],
+            });
+            await expect(service.createOrder(order)).resolves.toEqual({
+                orderNumber: "OZ-1",
+                postingNumber: "POST-1",
+            });
+        });
+
+        it("keeps creation uncertain when the posting response is malformed", async () => {
+            const { service } = build({
+                "/v1/order/create": [
+                    ok({
+                        order_number: "OZ-1",
+                        postings: { posting_number: "POST-1" },
+                    }),
+                ],
+            });
+            await expect(service.createOrder(order)).rejects.toBeInstanceOf(
+                OzonDeliveryUncertainException,
+            );
+        });
+
         it.each(["2026-01-01T12:00:00Z", "2099-01-01T12:00:00Z"])(
             "ignores a legacy saved cutoff %s when creating an order",
             async (cutoffAt) => {
@@ -654,6 +704,76 @@ describe("OzonDeliveryService", () => {
     });
 
     describe("postings", () => {
+        it.each([
+            [404, { error: { code: "posting_not_found" } }],
+            [
+                400,
+                {
+                    details: [
+                        { item_id: "1", error: { code: "PostingNotFound" } },
+                    ],
+                },
+            ],
+        ])(
+            "retries approval of the same posting after a not-found response (%s)",
+            async (status, data) => {
+                jest.useFakeTimers();
+                try {
+                    const { service, apiCalls } = build({
+                        "/v1/posting/approve": [
+                            failure(status as number, data),
+                            ok(""),
+                        ],
+                    });
+                    const approval = service.approvePosting("POST-1");
+                    await jest.advanceTimersByTimeAsync(500);
+                    await expect(approval).resolves.toBeUndefined();
+                    expect(apiCalls().map(([, body]) => body)).toEqual([
+                        { posting_number: "POST-1" },
+                        { posting_number: "POST-1" },
+                    ]);
+                } finally {
+                    jest.useRealTimers();
+                }
+            },
+        );
+
+        it("keeps approval uncertain after a bounded number of not-found retries", async () => {
+            jest.useFakeTimers();
+            try {
+                const { service, apiCalls } = build({
+                    "/v1/posting/approve": [
+                        failure(404, { error: { code: "posting_not_found" } }),
+                    ],
+                });
+                const expected = expect(
+                    service.approvePosting("POST-1"),
+                ).rejects.toBeInstanceOf(OzonDeliveryUncertainException);
+                await jest.advanceTimersByTimeAsync(5000);
+                await expected;
+                expect(apiCalls()).toHaveLength(4);
+                expect(
+                    apiCalls().every(
+                        ([url]) => url === `${API}/v1/posting/approve`,
+                    ),
+                ).toBe(true);
+            } finally {
+                jest.useRealTimers();
+            }
+        });
+
+        it("does not apply approval retries to cancellation", async () => {
+            const { service, apiCalls } = build({
+                "/v1/posting/cancel": [
+                    failure(404, { error: { code: "posting_not_found" } }),
+                ],
+            });
+            await expect(
+                service.cancelPosting("POST-1"),
+            ).rejects.toBeInstanceOf(BadGatewayException);
+            expect(apiCalls()).toHaveLength(1);
+        });
+
         it("confirms a posting by its number", async () => {
             const { service, apiCalls } = build({
                 "/v1/posting/approve": [ok("")],
