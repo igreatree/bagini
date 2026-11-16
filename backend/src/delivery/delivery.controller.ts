@@ -2,12 +2,19 @@ import { Controller, Get, Query, UseGuards } from "@nestjs/common";
 import { DeliveryPointService } from "./delivery-point.service";
 import { SearchPointsDto } from "./dto/search-points.dto";
 import { JwtCookieAuthGuard } from "../auth/guards/jwtCookie-auth.guard";
+import { MapPointsDto } from "./dto/map-points.dto";
 
 const MIN_QUERY_LENGTH = 3;
 
 @Controller("delivery")
 export class DeliveryController {
     constructor(private readonly points: DeliveryPointService) {}
+
+    @UseGuards(JwtCookieAuthGuard)
+    @Get("points/map")
+    async map(@Query() bounds: MapPointsDto) {
+        return this.points.inBounds(bounds);
+    }
 
     // Пункты выдачи Ozon по части адреса: ?q=москва тверская
     @UseGuards(JwtCookieAuthGuard)

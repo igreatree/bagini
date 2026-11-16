@@ -244,4 +244,72 @@ describe("DeliveryPointService", () => {
             );
         });
     });
+
+    describe("inBounds", () => {
+        const bounds = { south: 55.7, north: 55.8, west: 37.5, east: 37.7 };
+        it("loads only active compatible pickup points in the visible area with coordinates", async () => {
+            const { service, prisma } = build();
+            prisma.deliveryPoint.findMany.mockResolvedValue([
+                { id: 520868n, latitude: 55.75, longitude: 37.6 },
+            ] as never);
+            const result = await service.inBounds(bounds);
+            expect(prisma.deliveryPoint.findMany).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: {
+                        isActive: true,
+                        shipmentMethodIds: { has: 77n },
+                        latitude: { gte: 55.7, lte: 55.8 },
+                        longitude: { gte: 37.5, lte: 37.7 },
+                    },
+                    select: expect.objectContaining({
+                        latitude: true,
+                        longitude: true,
+                    }),
+                    take: 251,
+                }),
+            );
+            expect(result).toMatchObject({
+                items: [{ id: 520868, latitude: 55.75, longitude: 37.6 }],
+                truncated: false,
+            });
+            expect(() => JSON.stringify(result)).not.toThrow();
+        });
+
+        it("caps dense map areas and asks the client to zoom in", async () => {
+            const { service, prisma } = build();
+            prisma.deliveryPoint.findMany.mockResolvedValue(
+                Array.from({ length: 251 }, (_, id) => ({
+                    id: BigInt(id + 1),
+                })) as never,
+            );
+            const result = await service.inBounds(bounds);
+            expect(result.items).toHaveLength(250);
+            expect(result.truncated).toBe(true);
+        });
+
+        it.each([
+            { ...bounds, south: 56 },
+            { ...bounds, west: 38 },
+            { ...bounds, north: NaN },
+            { south: -85, north: 85, west: -180, east: 180 },
+            { ...bounds, north: Infinity },
+        ])(
+            "rejects invalid or overly large areas before querying the database",
+            async (area) => {
+                const { service, prisma } = build();
+                await expect(service.inBounds(area)).rejects.toThrow(
+                    "Приблизьте карту",
+                );
+                expect(prisma.deliveryPoint.findMany).not.toHaveBeenCalled();
+            },
+        );
+
+        it("requires configured delivery for map browsing", async () => {
+            const { service, prisma } = build({ isConfigured: false });
+            await expect(service.inBounds(bounds)).rejects.toThrow(
+                "не настроена",
+            );
+            expect(prisma.deliveryPoint.findMany).not.toHaveBeenCalled();
+        });
+    });
 });

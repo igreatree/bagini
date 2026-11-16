@@ -86,7 +86,17 @@ export type DeliveryPointType = {
     name: string;
     address: string;
     type: string | null;
+    latitude: number | null;
+    longitude: number | null;
 };
+
+export type MapBoundsType = {
+    south: number;
+    north: number;
+    west: number;
+    east: number;
+};
+export type MapPointsType = { items: DeliveryPointType[]; truncated: boolean };
 
 // Заказ с пробником, который занимает лимит аккаунта (отменённые не учитываются)
 export type ProbePurchaseType = {

@@ -1,4 +1,5 @@
 import {
+    BadRequestException,
     Injectable,
     Logger,
     OnApplicationBootstrap,
@@ -7,6 +8,7 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "../prisma.service";
 import { OzonDeliveryService } from "./ozon-delivery.service";
+import type { MapPointsDto } from "./dto/map-points.dto";
 
 const SYNC_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const SYNC_CHECK_INTERVAL_MS = 60 * 60 * 1000;
@@ -15,6 +17,15 @@ const PAGE_SIZE = 100;
 const MAX_PAGES = 2000;
 const SEARCH_LIMIT = 20;
 const MAX_SEARCH_WORDS = 6;
+const MAP_LIMIT = 250;
+const POINT_FIELDS = {
+    id: true,
+    name: true,
+    address: true,
+    type: true,
+    latitude: true,
+    longitude: true,
+} as const;
 
 // Справочник пунктов выдачи Ozon Доставки: API отдаёт его только целиком, поэтому
 // храним копию в базе и обновляем раз в сутки, а покупателю ищем по ней.
@@ -192,7 +203,7 @@ export class DeliveryPointService
                     ],
                 })),
             },
-            select: { id: true, name: true, address: true, type: true },
+            select: POINT_FIELDS,
             orderBy: { address: "asc" },
             take: SEARCH_LIMIT,
         });
@@ -202,6 +213,48 @@ export class DeliveryPointService
             );
         }
         return points.map((point) => ({ ...point, id: Number(point.id) }));
+    }
+
+    async inBounds({ south, north, west, east }: MapPointsDto) {
+        if (!this.ozon.isConfigured) {
+            throw new ServiceUnavailableException("Доставка Ozon не настроена");
+        }
+        if (
+            ![south, north, west, east].every(Number.isFinite) ||
+            south < -85 ||
+            north > 85 ||
+            west < -180 ||
+            east > 180 ||
+            south >= north ||
+            west >= east ||
+            north - south > 10 ||
+            east - west > 20
+        ) {
+            throw new BadRequestException(
+                "Приблизьте карту для поиска пунктов выдачи",
+            );
+        }
+        const points = await this.prisma.deliveryPoint.findMany({
+            where: {
+                ...this.available(),
+                latitude: { gte: south, lte: north },
+                longitude: { gte: west, lte: east },
+            },
+            select: POINT_FIELDS,
+            orderBy: { id: "asc" },
+            take: MAP_LIMIT + 1,
+        });
+        if (points.length === 0 && this.syncing) {
+            throw new ServiceUnavailableException(
+                "Список пунктов выдачи обновляется. Повторите поиск через минуту",
+            );
+        }
+        return {
+            items: points
+                .slice(0, MAP_LIMIT)
+                .map((point) => ({ ...point, id: Number(point.id) })),
+            truncated: points.length > MAP_LIMIT,
+        };
     }
 
     async findAvailable(id: number) {
