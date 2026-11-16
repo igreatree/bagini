@@ -65,7 +65,7 @@ export const ProductCartControls = ({
                     leftSection={<IconBasket size={18} />}
                     styles={buttonStyles}
                 >
-                    Добавить в корзину
+                    В корзину
                 </Button>
             ) : (
                 <>
@@ -119,7 +119,7 @@ export const ProductCartControls = ({
                         rightSection={<IconArrowRight size={17} />}
                         styles={buttonStyles}
                     >
-                        Перейти в корзину
+                        Корзина
                     </Button>
                 </>
             )}
